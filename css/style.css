@@ -1,0 +1,239 @@
+/* Zielaufloesung 1920x1080. Tizen 2.3 = altes WebKit: -webkit-Praefixe, kein Flexbox-Zwang. */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: #14161a;
+    color: #f2f2f2;
+    font-family: "SamsungOne", "Samsung Sans", Tahoma, Arial, sans-serif;
+    font-size: 28px;
+}
+
+.hidden { display: none !important; }
+
+.view {
+    position: absolute;
+    left: 0; top: 0;
+    width: 1920px;
+    height: 1080px;
+}
+
+/* ---------- Laden ---------- */
+.overlay {
+    position: absolute;
+    left: 0; top: 0; width: 1920px; height: 1080px;
+    background: rgba(10, 11, 14, 0.85);
+    z-index: 100;
+    text-align: center;
+}
+.spinner {
+    width: 90px; height: 90px;
+    margin: 430px auto 30px;
+    border: 10px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #f39200;
+    border-radius: 50%;
+    -webkit-animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
+}
+@-webkit-keyframes spin { to { -webkit-transform: rotate(360deg); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Login ---------- */
+.login-box {
+    width: 760px;
+    margin: 150px auto 0;
+    padding: 50px 70px;
+    background: #1f2229;
+    border-radius: 16px;
+}
+.login-box h1 { margin: 0 0 20px; font-size: 56px; line-height: 1.1; color: #f39200; }
+.login-box h1 span { color: #f2f2f2; font-weight: normal; }
+.login-box .hint { color: #a9adb6; margin: 0 0 30px; }
+.login-box label { display: block; margin: 20px 0 8px; color: #c8ccd4; }
+.login-box input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    padding: 16px 20px;
+    font-size: 32px;
+    color: #fff;
+    background: #2b2f38;
+    border: 4px solid #2b2f38;
+    border-radius: 8px;
+    outline: none;
+}
+.button {
+    margin-top: 40px;
+    padding: 18px;
+    text-align: center;
+    font-size: 34px;
+    background: #2b2f38;
+    border: 4px solid #2b2f38;
+    border-radius: 8px;
+}
+.login-box .focused { border-color: #f39200; }
+.login-box .button.focused { background: #f39200; color: #14161a; }
+.error { margin-top: 26px; color: #ff6b5e; min-height: 40px; }
+
+/* ---------- Spieleauswahl ---------- */
+.topbar {
+    position: absolute;
+    left: 0; top: 0; width: 1920px; height: 130px;
+    padding: 0 90px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+.topbar h1 { float: left; margin: 40px 0 0; font-size: 44px; }
+.topbar h1 span { color: #a9adb6; font-weight: normal; font-size: 32px; }
+.keyhints { color: #a9adb6; font-size: 24px; }
+.topbar .keyhints { float: right; margin-top: 52px; }
+.key {
+    display: inline-block;
+    width: 26px; height: 18px;
+    margin: 0 6px 0 22px;
+    border-radius: 4px;
+    vertical-align: middle;
+}
+.key.red { background: #e53935; }
+.key.green { background: #43a047; }
+.key.back { width: auto; height: auto; background: none; font-size: 28px; }
+
+#grid-scroll {
+    position: absolute;
+    left: 0; top: 130px; width: 1920px; height: 950px;
+    overflow: hidden;
+}
+#grid {
+    position: relative;
+    padding: 30px 75px 60px;
+    -webkit-transition: -webkit-transform 0.25s ease-out;
+    transition: transform 0.25s ease-out;
+}
+/* 6 Spalten: 6 x (260 + 2*15) = 1740px */
+.tile {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    width: 260px;
+    height: 260px;
+    margin: 15px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #2b2f38 center center no-repeat;
+    background-size: cover;
+    -webkit-background-size: cover;
+    border: 5px solid transparent;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -webkit-transition: -webkit-transform 0.15s, border-color 0.15s;
+    transition: transform 0.15s, border-color 0.15s;
+}
+.tile .placeholder {
+    position: absolute;
+    left: 0; top: 60px; width: 100%;
+    text-align: center;
+    font-size: 80px;
+    color: #3d424d;
+}
+.tile .title {
+    position: absolute;
+    left: 0; bottom: 0; width: 100%;
+    padding: 40px 14px 12px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    font-size: 22px;
+    line-height: 1.2;
+    background: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.9));
+    background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.9));
+    max-height: 120px;
+    overflow: hidden;
+}
+.tile.focused {
+    border-color: #f39200;
+    -webkit-transform: scale(1.08);
+    transform: scale(1.08);
+    z-index: 2;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+#grid-empty { position: absolute; top: 500px; width: 1920px; text-align: center; color: #a9adb6; }
+
+/* ---------- Player ---------- */
+#view-player { background: #000; }
+#video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; }
+
+#player-osd {
+    position: absolute;
+    left: 0; bottom: 0; width: 1920px;
+    padding: 80px 90px 40px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    background: -webkit-linear-gradient(top, rgba(0,0,0,0), rgba(0,0,0,0.85));
+    background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.85));
+}
+#osd-game { font-size: 30px; color: #a9adb6; }
+#osd-chapter { font-size: 44px; margin: 6px 0 20px; }
+.osd-bar { height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; }
+#osd-progress {
+    height: 10px; width: 100%; background: #f39200;
+    -webkit-transform-origin: 0 0; transform-origin: 0 0;
+    -webkit-transform: scaleX(0); transform: scaleX(0);
+}
+#osd-time { margin: 12px 0 10px; font-size: 26px; }
+
+#player-chapters {
+    position: absolute;
+    right: 0; top: 0; width: 600px; height: 1080px;
+    padding: 60px 40px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    background: #0f1115; /* deckend: guenstiger zu compositen als halbtransparent ueber Video */
+    overflow: hidden;
+}
+#player-chapters h2 { margin: 0 0 24px; color: #f39200; font-size: 38px; }
+#chapter-list { list-style: none; margin: 0; padding: 0; position: relative; }
+#chapter-list li {
+    padding: 16px 20px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    border: 4px solid transparent;
+    font-size: 28px;
+}
+#chapter-list li .num { display: inline-block; width: 46px; color: #a9adb6; }
+#chapter-list li.current { color: #f39200; }
+#chapter-list li.focused { border-color: #f39200; background: #2b2f38; }
+
+#player-status {
+    position: absolute;
+    left: 660px; top: 470px; width: 600px;
+    padding: 30px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    text-align: center;
+    font-size: 34px;
+    background: rgba(15, 17, 21, 0.85);
+    border-radius: 14px;
+}
+
+/* Kurzmeldung ueber das Lade-Overlay */
+.overlay.message .spinner { display: none; }
+.overlay.message #loading-text { margin-top: 480px; font-size: 36px; padding: 0 300px; }
+
+#player-debug {
+    position: absolute;
+    left: 30px; top: 30px;
+    margin: 0;
+    padding: 16px 20px;
+    font: 22px/1.4 monospace;
+    color: #9f9;
+    background: #000;
+}
+
+/* Overlays ueber dem Video auf eigene Compositing-Ebenen legen, damit Aenderungen
+   (Fortschritt, Fokus) nicht das Video bzw. grosse Flaechen neu zeichnen lassen. */
+#video, #player-osd, #player-chapters, #chapter-list, #player-status, #player-debug {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}

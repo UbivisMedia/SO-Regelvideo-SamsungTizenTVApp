@@ -1,0 +1,8 @@
+.sign/
+*.wgt
+.buildResult/
+author-signer.p12
+dist/
+
+# Beispielseiten mit persoenlichen Daten (nur lokal fuer den Mock-Modus)
+.dev/

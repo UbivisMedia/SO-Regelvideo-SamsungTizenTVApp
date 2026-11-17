@@ -1,0 +1,204 @@
+/*
+ * Zugriff auf spiele-offensive.de: Login, Videorechte, Regelvideo-Seiten.
+ * Die Seiten werden als HTML geladen und ausgewertet (es gibt keine offizielle API).
+ *
+ * Mock-Modus (Entwicklung im Desktop-Browser, ohne CORS/Login):
+ *   index.html?mock  -> laedt die Beispieldateien aus .dev/HTML-Beispiele/
+ */
+var Api = (function () {
+    'use strict';
+
+    var BASE = 'https://www.spiele-offensive.de';
+    var URL_LOGIN = BASE + '/index.php?cmd=login&z=kundenbereich';
+    var URL_RIGHTS = BASE + '/index.php?cmd=videorechte';
+    var MEDIA = 'https://mediaservice.happyshops.com/ANY/Article/';
+
+    var MOCK = /[?&]mock\b/.test(location.search);
+    var MOCK_FILES = {
+        rights: '.dev/HTML-Beispiele/videorechte.html',
+        video: '.dev/HTML-Beispiele/videoseite.tml'
+    };
+
+    var credentials = null;
+
+    function isLoggedIn(html) {
+        return /cmd=logout/i.test(html);
+    }
+
+    function setCredentials(c) { credentials = c; }
+
+    // ------------------------------------------------------------------ Login
+
+    /** Liest das Loginformular aus (inkl. dynamischem "doubletracker"). */
+    function parseLoginForm(html, pageUrl) {
+        var doc = Util.parseHtml(html);
+        var forms = doc.getElementsByTagName('form');
+        var form = null, i;
+        for (i = 0; i < forms.length; i++) {
+            if (forms[i].querySelector('input[type=password]')) { form = forms[i]; break; }
+        }
+        if (!form) { return null; }
+
+        var fields = [], userName = null, passName = null;
+        var inputs = form.getElementsByTagName('input');
+        for (i = 0; i < inputs.length; i++) {
+            var inp = inputs[i];
+            var type = (inp.getAttribute('type') || 'text').toLowerCase();
+            var name = inp.getAttribute('name');
+            if (!name) { continue; }
+            if (type === 'password') {
+                passName = name;
+            } else if ((type === 'text' || type === 'email') && !userName) {
+                userName = name;
+            } else if (type === 'hidden' || type === 'submit') {
+                fields.push([name, inp.getAttribute('value') || '']);
+            } else if ((type === 'checkbox' || type === 'radio') && inp.hasAttribute('checked')) {
+                fields.push([name, inp.getAttribute('value') || 'on']);
+            }
+        }
+        return {
+            action: Util.resolveUrl(form.getAttribute('action') || '/index.php?seite=13', pageUrl),
+            userField: userName || 'email',
+            passField: passName || 'pwd',
+            fields: fields
+        };
+    }
+
+    /** cb(err, rightsHtml) */
+    function login(cb) {
+        if (MOCK) { return setTimeout(function () { cb(null); }, 300); }
+        if (!credentials) { return cb({ code: 'no_credentials', message: 'Keine Zugangsdaten' }); }
+
+        Http.get(URL_LOGIN, function (err, res) {
+            if (err) { return cb(err); }
+            if (isLoggedIn(res.text)) { return cb(null); } // Session besteht noch
+
+            var form = parseLoginForm(res.text, res.url);
+            if (!form) { return cb({ code: 'parse', message: 'Loginformular nicht gefunden' }); }
+
+            var fields = [[form.userField, credentials.user], [form.passField, credentials.pass]]
+                .concat(form.fields);
+            Http.post(form.action, Http.encodeForm(fields, res.charset), function (err2, res2) {
+                if (err2) { return cb(err2); }
+                if (isLoggedIn(res2.text)) { return cb(null); }
+                cb({ code: 'login_failed', message: 'Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.' });
+            });
+        });
+    }
+
+    /** Laedt eine Seite, die einen Login braucht; meldet sich bei Bedarf (erneut) an. */
+    function getAuthed(url, cb) {
+        Http.get(url, function (err, res) {
+            if (err) { return cb(err); }
+            if (isLoggedIn(res.text)) { return cb(null, res.text); }
+            login(function (err2) {
+                if (err2) { return cb(err2); }
+                Http.get(url, function (err3, res3) {
+                    if (err3) { return cb(err3); }
+                    if (!isLoggedIn(res3.text)) {
+                        return cb({ code: 'login_failed', message: 'Anmeldung fehlgeschlagen.' });
+                    }
+                    cb(null, res3.text);
+                });
+            });
+        });
+    }
+
+    function getPage(url, mockKey, cb) {
+        if (MOCK) {
+            return Http.get(MOCK_FILES[mockKey], function (err, res) { cb(err, res && res.text); });
+        }
+        getAuthed(url, cb);
+    }
+
+    // ------------------------------------------------------------ Videorechte
+
+    function articleImage(id, size) {
+        var padded = ('000000000000' + id).slice(-12);
+        return MEDIA + padded + '/' + (size ? 'size=' + size + '/' : '') + id + '.jpg';
+    }
+
+    /** Liefert [{ id, title, url, image, imageSmall }] */
+    function parseGames(html) {
+        var doc = Util.parseHtml(html);
+        var links = doc.querySelectorAll('a[href*="/Regelvideo/"]');
+        var seen = {}, games = [];
+        for (var i = 0; i < links.length; i++) {
+            var href = links[i].getAttribute('href');
+            var m = /-(\d+)\.html/.exec(href);
+            if (!m || seen[m[1]]) { continue; }
+            seen[m[1]] = true;
+            games.push({
+                id: m[1],
+                title: Util.text(links[i]),
+                url: Util.resolveUrl(href, BASE + '/'),
+                image: articleImage(m[1]),              // Originalgroesse
+                imageSmall: articleImage(m[1], '200x200') // Fallback
+            });
+        }
+        games.sort(function (a, b) { return a.title.localeCompare(b.title, 'de'); });
+        return games;
+    }
+
+    function getGames(cb) {
+        getPage(URL_RIGHTS, 'rights', function (err, html) {
+            if (err) { return cb(err); }
+            cb(null, parseGames(html));
+        });
+    }
+
+    // ------------------------------------------------------------- Videoseite
+
+    /** Liefert { title, chapters: [{ title, url }] } */
+    function parseVideoPage(html) {
+        var urls = [], m;
+        var re = /playlist\[(\d+)\]\s*=\s*['"]([^'"]+)['"]/g;
+        while ((m = re.exec(html)) !== null) {
+            urls[parseInt(m[1], 10)] = m[2];
+        }
+
+        var doc = Util.parseHtml(html);
+        var chapters = [];
+        for (var i = 0; i < urls.length; i++) {
+            if (!urls[i]) { continue; }
+            var el = doc.getElementById('playlist_' + i);
+            chapters.push({
+                title: el ? Util.text(el) : 'Kapitel ' + i,
+                url: Util.resolveUrl(urls[i], BASE + '/')
+            });
+        }
+
+        var h1 = doc.querySelector('h1');
+        var title = h1 ? Util.text(h1).replace(/^Videoregelerklärung zu\s*/i, '') : '';
+        return { title: title, chapters: chapters };
+    }
+
+    function getVideo(game, cb) {
+        getPage(game.url, 'video', function (err, html) {
+            if (err) { return cb(err); }
+            var video = parseVideoPage(html);
+            if (!video.chapters.length) {
+                return cb({ code: 'no_video', message: 'Für dieses Spiel wurden keine Videokapitel gefunden.' });
+            }
+            cb(null, video);
+        });
+    }
+
+    function logout() {
+        credentials = null;
+        if (!MOCK) { Http.get(BASE + '/index.php?cmd=logout', function () {}); }
+    }
+
+    return {
+        isMock: MOCK,
+        setCredentials: setCredentials,
+        login: login,
+        getGames: getGames,
+        getVideo: getVideo,
+        logout: logout,
+        // fuer Tests
+        _parseLoginForm: parseLoginForm,
+        _parseGames: parseGames,
+        _parseVideoPage: parseVideoPage
+    };
+}());
