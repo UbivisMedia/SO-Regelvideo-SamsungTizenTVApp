@@ -17,7 +17,10 @@ Push-Location $root
 try {
     # tar.exe (in Windows 10/11 enthalten) erzeugt ZIPs mit korrekten "/"-Pfaden,
     # anders als Compress-Archive unter Windows PowerShell 5.
-    & tar.exe --format zip -cf $out @include
+    # Explizit das Windows-tar (bsdtar) verwenden: GNU-tar aus Git for Windows kann kein ZIP.
+    $tar = Join-Path $env:SystemRoot 'System32\tar.exe'
+    if (-not (Test-Path $tar)) { throw "Windows-tar nicht gefunden: $tar (ab Windows 10 1803 enthalten)" }
+    & $tar --format zip -cf $out @include
     if ($LASTEXITCODE -ne 0) { throw "tar fehlgeschlagen ($LASTEXITCODE)" }
 } finally {
     Pop-Location

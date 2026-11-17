@@ -51,6 +51,7 @@ var GridView = (function () {
             tiles.push(tile);
             loadImage(tile, list[i]);
         }
+        refreshProgress();
         scrollRow = 0;
         focus(Math.min(idx, list.length - 1));
     }
@@ -69,7 +70,25 @@ var GridView = (function () {
         grid.style.transform = 'translateY(' + y + 'px)';
     }
 
-    function show() { Util.show(el); }
+    /** Fortschrittsbalken (Fortsetzen-Stand) auf allen Kacheln aktualisieren. */
+    function refreshProgress() {
+        for (var i = 0; i < tiles.length; i++) {
+            var bar = tiles[i].querySelector('.progress');
+            var f = Progress.fraction(games[i].id);
+            if (f === null) {
+                if (bar) { tiles[i].removeChild(bar); }
+                continue;
+            }
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.className = 'progress';
+                tiles[i].appendChild(bar);
+            }
+            bar.style.width = Math.max(3, Math.round(f * 100)) + '%';
+        }
+    }
+
+    function show() { refreshProgress(); Util.show(el); }
     function hide() { Util.hide(el); }
 
     function onKey(key) {

@@ -8,7 +8,11 @@ von spiele-offensive.de mit dem eigenen Kundenkonto.
 - Login mit E-Mail/Passwort des Spiele-Offensive-Kundenkontos (wird lokal in der App gespeichert)
 - Automatischer (Re-)Login, wenn die Session abgelaufen ist
 - Liste der Spiele mit Videorechten (`index.php?cmd=videorechte`) als quadratische Kacheln mit Spielbild
+- Spiele alphabetisch sortiert (Umlaute richtig einsortiert, unabhängig vom TV-Browser)
 - Player mit Kapiteln: automatischer Wechsel zum nächsten Kapitel, Kapitelauswahl per Liste
+- **Fortsetzen:** Der Fortschritt pro Spiel wird auf dem TV gespeichert; beim erneuten Öffnen
+  fragt die App „Fortsetzen“ oder „Von vorne“. Die Kacheln zeigen den Fortschritt als Balken.
+  Nach dem letzten Kapitel wird der Stand gelöscht.
 
 ## Bedienung (Fernbedienung)
 
@@ -23,7 +27,9 @@ von spiele-offensive.de mit dem eigenen Kundenkonto.
 | | ◀ ▶ / ⏪ ⏩ | 10 s zurück/vor |
 | | ▲ ▼ | Kapitelliste öffnen, Kapitel wählen, OK startet es |
 | | CH+ / CH− (⏭ ⏮) | nächstes / vorheriges Kapitel |
-| | ZURÜCK / ⏹ | zurück zur Spieleauswahl |
+| | ZURÜCK / ⏹ | zurück zur Spieleauswahl (Position wird gespeichert) |
+| | BLAU | Diagnose-Anzeige ein/aus (Desktop: D) |
+| Fortsetzen-Dialog | ◀ ▶ / OK | „Fortsetzen“ oder „Von vorne“ wählen |
 
 ## Projektstruktur
 
@@ -35,6 +41,7 @@ js/keys.js          Registrierung/Mapping der Fernbedienungstasten
 js/util.js          DOM-/HTML-Hilfen
 js/http.js          XHR inkl. Zeichensatz-Behandlung (Seite ist ISO-8859-1)
 js/credstore.js     Speicherung der Zugangsdaten (localStorage)
+js/progress.js      Wiedergabe-Fortschritt pro Spiel (Fortsetzen)
 js/api.js           Login, Videorechte-Liste, Videoseite parsen
 js/view-*.js        Ansichten Login / Kacheln / Player
 js/app.js           Ablaufsteuerung, Tastenverteilung

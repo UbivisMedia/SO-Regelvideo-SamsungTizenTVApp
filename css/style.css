@@ -231,6 +231,37 @@ html, body {
     background: #000;
 }
 
+/* Fortsetzen-Dialog */
+#player-resume {
+    position: absolute;
+    left: 510px; top: 340px; width: 900px;
+    padding: 50px 60px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    background: #1f2229;
+    border-radius: 16px;
+    text-align: center;
+}
+#player-resume h2 { margin: 0 0 20px; font-size: 48px; color: #f39200; }
+#resume-info { font-size: 30px; color: #c8ccd4; min-height: 40px; }
+.resume-buttons { margin-top: 20px; }
+.resume-buttons .button {
+    display: inline-block;
+    width: 320px;
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    margin: 20px 15px 0;
+}
+.resume-buttons .button.focused { background: #f39200; border-color: #f39200; color: #14161a; }
+
+/* Fortschritt auf den Kacheln */
+.tile .progress {
+    position: absolute;
+    left: 0; bottom: 0; height: 8px;
+    background: #f39200;
+    z-index: 1;
+}
+
 /* Overlays ueber dem Video auf eigene Compositing-Ebenen legen, damit Aenderungen
    (Fortschritt, Fokus) nicht das Video bzw. grosse Flaechen neu zeichnen lassen. */
 #video, #player-osd, #player-chapters, #chapter-list, #player-status, #player-debug {

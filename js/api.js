@@ -118,6 +118,23 @@ var Api = (function () {
         return MEDIA + padded + '/' + (size ? 'size=' + size + '/' : '') + id + '.jpg';
     }
 
+    /**
+     * Alphabetischer Sortierschluessel, unabhaengig von localeCompare
+     * (das alte WebKit auf Tizen 2.3 ignoriert das Gebietsschema und sortiert "Ä" hinter "Z").
+     */
+    function sortKey(title) {
+        return title.toLowerCase()
+            .replace(/[äàáâã]/g, 'a').replace(/[öòóôõ]/g, 'o').replace(/[üùúû]/g, 'u')
+            .replace(/[éèêë]/g, 'e').replace(/[íìîï]/g, 'i').replace(/ß/g, 'ss')
+            .replace(/^[^a-z0-9]+/, '');
+    }
+
+    function compareTitles(a, b) {
+        var ka = sortKey(a.title), kb = sortKey(b.title);
+        if (ka !== kb) { return ka < kb ? -1 : 1; }
+        return a.title < b.title ? -1 : (a.title > b.title ? 1 : 0);
+    }
+
     /** Liefert [{ id, title, url, image, imageSmall }] */
     function parseGames(html) {
         var doc = Util.parseHtml(html);
@@ -136,7 +153,7 @@ var Api = (function () {
                 imageSmall: articleImage(m[1], '200x200') // Fallback
             });
         }
-        games.sort(function (a, b) { return a.title.localeCompare(b.title, 'de'); });
+        games.sort(compareTitles);
         return games;
     }
 

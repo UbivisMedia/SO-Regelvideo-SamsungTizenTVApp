@@ -13,6 +13,63 @@ var PlayerView = (function () {
     var game = null, chapters = [], current = 0, listIdx = 0;
     var osdTimer = null, listTimer = null, onExit = null;
 
+    // ----------------------------------------------------------- Fortsetzen
+    var SAVE_INTERVAL = 5;        // Sekunden zwischen Speicherungen
+    var RESUME_REWIND = 3;        // beim Fortsetzen etwas zurueckspringen (Kontext)
+    var MIN_RESUME = 10;          // erst ab 10 s im ersten Kapitel lohnt Fortsetzen
+    var lastSavedTime = 0, resumeEntry = null, resumeIdx = 0, seekPending = false;
+
+    function saveProgress() {
+        if (!game || !chapters.length || seekPending || video.ended) { return; }
+        var t = video.currentTime, d = video.duration;
+        lastSavedTime = t;
+        if (isFinite(d) && d > 0 && t > d - 2) {
+            // praktisch am Kapitelende -> naechstes Kapitel merken
+            if (current + 1 < chapters.length) {
+                Progress.save(game.id, current + 1, 0, 0, chapters.length);
+            }
+            return;
+        }
+        Progress.save(game.id, current, t, d, chapters.length);
+    }
+
+    /**
+     * Fortsetzen nur anbieten, wenn es sich lohnt: mind. 10 s in einem Kapitel oder ab dem
+     * 3. Kapitel. (Kapitel 1 ist meist das kurze Start-Intro; "Kapitel 2 bei 0:00" waere sinnlos.)
+     */
+    function canResume(p) {
+        return !!p && p.c < chapters.length && (p.t >= MIN_RESUME || p.c >= 2);
+    }
+
+    function showResumeDialog(p) {
+        resumeEntry = p;
+        resumeIdx = 0;
+        var ch = chapters[p.c];
+        $('resume-info').textContent = 'Kapitel ' + (p.c + 1) + '/' + chapters.length + ': ' +
+            (ch ? ch.title : '') + (p.t > 0 ? ' (bei ' + Util.formatTime(p.t) + ')' : '');
+        renderResume();
+        Util.show($('player-resume'));
+    }
+
+    function renderResume() {
+        Util.toggleClass($('resume-continue'), 'focused', resumeIdx === 0);
+        Util.toggleClass($('resume-restart'), 'focused', resumeIdx === 1);
+    }
+
+    function resumeVisible() { return !/\bhidden\b/.test($('player-resume').className); }
+
+    function chooseResume(cont) {
+        var p = resumeEntry;
+        Util.hide($('player-resume'));
+        resumeEntry = null;
+        if (cont) {
+            playChapter(p.c, Math.max(0, p.t - RESUME_REWIND));
+        } else {
+            Progress.clear(game.id);
+            playChapter(0);
+        }
+    }
+
     // ----------------------------------------------------------- Diagnose
     // Blaue Taste (Desktop: D) blendet Wiedergabe-Statistiken ein/aus.
     var stats = { waiting: 0, stalled: 0 }, debugTimer = null, lastFrames = null;
@@ -80,11 +137,16 @@ var PlayerView = (function () {
             if (current + 1 < chapters.length) {
                 playChapter(current + 1);
             } else {
+                if (game) { Progress.clear(game.id); } // komplett gesehen -> naechstes Mal von vorne
                 setStatus('Video beendet');
                 showList();
             }
         });
-        video.addEventListener('timeupdate', updateOsd);
+        video.addEventListener('timeupdate', function () {
+            updateOsd();
+            if (Math.abs(video.currentTime - lastSavedTime) >= SAVE_INTERVAL) { saveProgress(); }
+        });
+        video.addEventListener('pause', function () { saveProgress(); });
         video.addEventListener('playing', function () { setStatus(null); });
         video.addEventListener('waiting', function () { stats.waiting++; setStatus('Lade…'); });
         video.addEventListener('stalled', function () { stats.stalled++; });
@@ -187,14 +249,29 @@ var PlayerView = (function () {
         if (!video.paused) { showOsd(); }
     }
 
-    function playChapter(i) {
+    /** startAt (optional): Startposition in Sekunden, z.B. beim Fortsetzen. */
+    function playChapter(i, startAt) {
         if (i < 0 || i >= chapters.length) { return; }
         current = i;
         listIdx = i;
+        lastSavedTime = startAt || 0;
         setStatus('Lade…');
         video.src = chapters[i].url;
         video.load();
+        if (startAt > 0) {
+            // Springen ist erst moeglich, wenn die Metadaten (Dauer) bekannt sind.
+            seekPending = true;
+            var onMeta = function () {
+                video.removeEventListener('loadedmetadata', onMeta);
+                seekPending = false;
+                try { video.currentTime = Math.min(startAt, Math.max(0, video.duration - 1)); } catch (e) {}
+            };
+            video.addEventListener('loadedmetadata', onMeta);
+        } else {
+            seekPending = false;
+        }
         safePlay();
+        if (game) { Progress.save(game.id, i, startAt || 0, 0, chapters.length); }
         if (listVisible()) { renderList(); }
         showOsd();
     }
@@ -207,10 +284,18 @@ var PlayerView = (function () {
         buildList();
         Util.show(el);
         hideList();
-        playChapter(0);
+        var saved = Progress.get(game.id);
+        if (canResume(saved)) {
+            showResumeDialog(saved);
+        } else {
+            playChapter(0);
+        }
     }
 
     function close() {
+        if (!resumeVisible()) { saveProgress(); }
+        Util.hide($('player-resume'));
+        resumeEntry = null;
         chapters = []; // verhindert verzoegerte Kapitelwechsel nach dem Schliessen
         video.pause();
         video.removeAttribute('src');
@@ -234,6 +319,15 @@ var PlayerView = (function () {
     }
 
     function onKey(key) {
+        if (resumeVisible()) {
+            switch (key) {
+            case 'LEFT': case 'UP': resumeIdx = 0; renderResume(); return true;
+            case 'RIGHT': case 'DOWN': resumeIdx = 1; renderResume(); return true;
+            case 'ENTER': case 'PLAY': case 'PLAYPAUSE': chooseResume(resumeIdx === 0); return true;
+            case 'BACK': case 'STOP': close(); onExit(); return true;
+            }
+            return true; // andere Tasten im Dialog ignorieren
+        }
         if (listVisible()) {
             clearTimeout(listTimer);
             listTimer = setTimeout(hideList, LIST_TIMEOUT);
