@@ -88,6 +88,20 @@ Bild↑/Bild↓ = Kapitel vor/zurück, R = Abmelden, G = Neu laden.
 3. In **Apps2Samsung** den TV auswählen, *eigene .wgt-Datei* wählen und installieren.
    Apps2Samsung kümmert sich um die Signierung.
 
+Fertige Pakete gibt es auch unter
+[Releases](https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/releases); Direktlink
+auf die jeweils neueste Version:
+<https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/releases/latest/download/SOVideoPlayer.wgt>
+
+## Neues Release veröffentlichen
+
+1. Version in `config.xml` erhöhen (`<widget … version="x.y.z">`).
+2. In `CHANGELOG.md` den Abschnitt *Unveröffentlicht* in `## [x.y.z] – Datum` umbenennen.
+3. Committen und pushen.
+4. Auf GitHub: *Actions* → **Release erstellen** → *Run workflow*.
+   Der Workflow baut die `.wgt`, legt Tag `vx.y.z` und das Release mit den Changelog-Notizen an.
+   Existiert das Release schon, bricht er ab.
+
 ## Alternativ: Tizen Studio / Tizen CLI
 
 1. **Tizen Studio** installieren, im Package Manager unter *Extension SDK* die

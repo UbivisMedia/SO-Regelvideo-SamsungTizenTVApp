@@ -1,0 +1,102 @@
+# Erstellt per Knopfdruck ein GitHub-Release mit der fertigen .wgt-Datei.
+#
+# Ablauf: Actions -> "Release erstellen" -> "Run workflow".
+#   - Version kommt aus config.xml (<widget version="x.y.z">), Tag = v<version>
+#   - Release-Notizen = Abschnitt "## [x.y.z]" aus CHANGELOG.md
+#   - Asset heisst immer SOVideoPlayer.wgt, damit dieser Link stabil bleibt:
+#     https://github.com/<owner>/<repo>/releases/latest/download/SOVideoPlayer.wgt
+name: Release erstellen
+
+on:
+  workflow_dispatch:
+    inputs:
+      prerelease:
+        description: 'Als Vorabversion (Pre-release) markieren'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Version aus config.xml lesen
+        id: version
+        run: |
+          # -z: das <widget>-Tag geht ueber mehrere Zeilen
+          VERSION=$(grep -zoP '<widget[^>]*\sversion="\K[0-9]+\.[0-9]+\.[0-9]+' config.xml | tr -d '\0')
+          if [ -z "$VERSION" ]; then echo "::error::Keine Version in config.xml gefunden"; exit 1; fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Pruefen, ob das Release schon existiert
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release $TAG existiert bereits. Bitte Version in config.xml erhoehen und CHANGELOG ergaenzen."
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG existiert bereits und wird fuer das Release verwendet."
+          fi
+
+      - name: Release-Notizen aus CHANGELOG.md
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { on = 1; next }
+            on && /^## \[/ { exit }
+            on && /^\[[^]]+\]: / { exit }
+            on { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::Kein Abschnitt '## [$VERSION]' in CHANGELOG.md gefunden"
+            exit 1
+          fi
+          cat release-notes.md
+
+      - name: Bei vorhandenem Tag dessen Stand bauen
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            git checkout -q "$TAG"
+            TAGGED=$(grep -zoP '<widget[^>]*\sversion="\K[0-9]+\.[0-9]+\.[0-9]+' config.xml | tr -d '\0')
+            if [ "$TAGGED" != "$VERSION" ]; then
+              echo "::error::Tag $TAG enthaelt Version '$TAGGED' statt $VERSION"
+              exit 1
+            fi
+            echo "Baue aus Tag $TAG ($(git rev-parse --short HEAD))"
+          fi
+
+      - name: .wgt bauen
+        run: |
+          mkdir -p dist
+          zip -r -X dist/SOVideoPlayer.wgt config.xml index.html icon.png css js
+          unzip -l dist/SOVideoPlayer.wgt
+
+      - name: Release erstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          FLAGS=""
+          if [ "$PRERELEASE" = "true" ]; then FLAGS="--prerelease"; else FLAGS="--latest"; fi
+          gh release create "$TAG" dist/SOVideoPlayer.wgt \
+            --target "$GITHUB_SHA" \
+            --title "SO Regelvideos $VERSION" \
+            --notes-file release-notes.md \
+            $FLAGS

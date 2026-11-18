@@ -4,6 +4,12 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach
 [Semantic Versioning](https://semver.org/lang/de/). Die Versionsnummer steht auch in `config.xml`.
 
+## [Unveröffentlicht]
+
+### Neu
+- GitHub-Workflow „Release erstellen“ (manuell startbar): baut die `.wgt` und veröffentlicht sie
+  als GitHub-Release mit den Notizen aus diesem Changelog.
+
 ## [1.1.0] – 2026-11-17
 
 ### Neu
