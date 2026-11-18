@@ -10,6 +10,7 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 - GitHub-Workflow „Release erstellen“ (manuell startbar): baut die `.wgt` und veröffentlicht sie
   als GitHub-Release mit den Notizen aus diesem Changelog.
 - MIT-Lizenz (`LICENSE`) und Hinweis im README, dass es sich um ein inoffizielles Projekt handelt.
+- `SECURITY.md` mit Meldeweg für Sicherheitslücken (vertraulich über GitHub) und Geltungsbereich.
 
 ## [1.1.0] – 2026-11-17
 
