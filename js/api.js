@@ -211,7 +211,18 @@ var Api = (function () {
     function getGames(cb) {
         getPage(URL_RIGHTS, 'rights', function (err, html) {
             if (err) { return cb(err); }
-            cb(null, parseGames(html));
+            var games = parseGames(html);
+            if (games.length || MOCK || !credentials) { return cb(null, games); }
+
+            // Leere Liste trotz "angemeldet": nach einem App-Neustart ist die Sitzung oft nur halb
+            // gueltig (Abmelden-Link da, aber keine Videorechte). Einmal frisch anmelden und neu laden.
+            login(function (err2) {
+                if (err2) { return cb(err2); }
+                getAuthed(URL_RIGHTS, function (err3, html3) {
+                    if (err3) { return cb(err3); }
+                    cb(null, parseGames(html3));
+                });
+            }, true);
         });
     }
 

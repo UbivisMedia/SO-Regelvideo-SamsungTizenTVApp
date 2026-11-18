@@ -15,9 +15,10 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
   (bestehende Sitzung wird beendet, kein erneutes Eintippen nötig).
 
 ### Behoben
-- Nach einem App-Neustart war die Sitzung teilweise ungültig und man musste sich ab- und neu
-  anmelden. Ist eine Seite nach dem Login weiterhin nicht angemeldet, beendet die App die Sitzung
-  jetzt selbst und meldet sich mit den gespeicherten Daten frisch an.
+- Nach einem App-Neustart war die Spieleliste leer: Die Sitzung galt noch als angemeldet, lieferte
+  aber keine Videorechte. Bei leerer Liste (oder wenn eine Seite nach dem Login weiterhin nicht
+  angemeldet ist) beendet die App die Sitzung jetzt selbst und meldet sich mit den gespeicherten
+  Daten frisch an.
 
 ### Sicherheit
 - Zugangsdaten werden nur noch per HTTPS an spiele-offensive.de gesendet, auch wenn das

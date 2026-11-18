@@ -142,7 +142,7 @@ standardmäßig aus; ggf. unter *Project Properties → Tizen Studio → Package
   auf diesem Server; schlägt es fehl, springt der Player automatisch zum ersten Kapitel.
 - **Session-Cookies:** Die Tizen-Web-Runtime verwaltet Cookies für XHR selbst; die `<access>`-Einträge
   in `config.xml` (nur spiele-offensive.de und Happyshops) heben dafür die Same-Origin-Beschränkung auf.
-  Nach einem App-Neustart kann die alte Sitzung nur noch „halb“ gültig sein; die App meldet sich dann
+  Nach einem App-Neustart kann die alte Sitzung nur noch „halb“ gültig sein (leere Spieleliste); die App meldet sich dann
   automatisch frisch an. Notfalls hilft die **blaue Taste** (neu anmelden mit gespeicherten Daten).
 - **Zugangsdaten** liegen Base64-verschleiert (nicht verschlüsselt) im localStorage der App.
 - **BoardGameGeek** als Bildquelle ist nicht eingebaut: Die BGG-XML-API erfordert inzwischen eine
