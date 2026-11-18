@@ -79,9 +79,13 @@ Mock-Modus, der die Beispielseiten aus `.dev/HTML-Beispiele/` verwendet:
 > und `videoseite.tml` (eine beliebige Regelvideo-Seite).
 
 ```
-npx http-server -p 8080 .
+npx http-server -a 127.0.0.1 -p 8080 .
 # dann im Browser:  http://localhost:8080/index.html?mock
 ```
+
+**Wichtig:** `-a 127.0.0.1` nicht weglassen. Ohne die Option lauscht http-server auf allen
+Netzwerkschnittstellen, und andere Geräte im Netz könnten die Beispielseiten in `.dev/` (mit
+persönlichen Daten) abrufen.
 
 Tasten im Browser: Pfeiltasten, Enter, Backspace/Esc = Zurück, Leertaste = Play/Pause,
 Bild↑/Bild↓ = Kapitel vor/zurück, R = Abmelden, G = Neu laden, D = neu anmelden (Spieleauswahl) bzw. Diagnose (Player).

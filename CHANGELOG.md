@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach
 [Semantic Versioning](https://semver.org/lang/de/). Die Versionsnummer steht auch in `config.xml`.
 
+## [Unveröffentlicht]
+
+### Sicherheit
+- Eingelesene Seiten werden vor dem Auswerten entschärft (`src`, `srcset`, `style`, `<link>`,
+  `<iframe>` u. a. umbenannt), damit das alte WebKit keine Bilder oder andere Ressourcen von
+  fremden Adressen nachlädt.
+- README: Mock-Server nur an `127.0.0.1` binden, damit `.dev/` nicht im Netzwerk erreichbar ist.
+
 ## [1.2.0] – 2026-11-18
 
 ### Neu

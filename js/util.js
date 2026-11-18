@@ -17,11 +17,20 @@ var Util = (function () {
         return (el.textContent || '').replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
     }
 
-    /** Parst HTML in ein inertes Dokument (keine Skripte, keine Bild-Downloads). */
+    /**
+     * Parst HTML in ein inertes Dokument (keine Skripte, keine Nachlade-Anfragen).
+     * Altes WebKit (Tizen 2.3) laedt Ressourcen evtl. auch in Dokumenten ohne Fenster.
+     * Darum werden alle Attribute/Tags, die etwas nachladen koennten, vorab entschaerft.
+     * Ausgewertet werden nur Links (href), Formularfelder und Texte - die bleiben erhalten.
+     */
     function parseHtml(html) {
         // Skripte/Styles vorab entfernen: spart Speicher und Zeit auf alten TVs.
         html = html.replace(/<script\b[\s\S]*?<\/script>/gi, '')
-                   .replace(/<style\b[\s\S]*?<\/style>/gi, '');
+                   .replace(/<style\b[\s\S]*?<\/style>/gi, '')
+                   // Lade-Attribute umbenennen (src="x" -> data-x-src="x")
+                   .replace(/(\s)(src|srcset|poster|background|data|style|xlink:href)(\s*=)/gi, '$1data-x-$2$3')
+                   // Tags, die ueber href/andere Attribute laden, unschaedlich umbenennen
+                   .replace(/<(\/?)(link|iframe|frame|object|embed|image|use|meta|base)\b/gi, '<$1x-$2');
         var doc = document.implementation.createHTMLDocument('');
         doc.documentElement.innerHTML = html;
         return doc;
