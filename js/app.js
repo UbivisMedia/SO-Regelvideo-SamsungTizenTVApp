@@ -34,13 +34,15 @@ var App = (function () {
     function doLogin(user, pass) {
         Api.setCredentials({ user: user, pass: pass });
         Util.loading(true, 'Anmelden…');
+        // fresh: eine evtl. noch bestehende Sitzung (anderes Konto?) nicht uebernehmen
         Api.login(function (err) {
             Util.loading(false);
             if (err) { return LoginView.showError(errorText(err)); }
             CredStore.save(user, pass);
+            Progress.setAccount(user);
             LoginView.hide();
             loadGames();
-        });
+        }, true);
     }
 
     function logout() {
@@ -128,6 +130,7 @@ var App = (function () {
         var creds = CredStore.load();
         if (creds || Api.isMock) {
             Api.setCredentials(creds);
+            Progress.setAccount(creds && creds.user);
             loadGames();
         } else {
             showLogin();

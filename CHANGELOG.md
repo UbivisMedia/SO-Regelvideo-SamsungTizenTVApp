@@ -12,6 +12,18 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 - MIT-Lizenz (`LICENSE`) und Hinweis im README, dass es sich um ein inoffizielles Projekt handelt.
 - `SECURITY.md` mit Meldeweg für Sicherheitslücken (vertraulich über GitHub) und Geltungsbereich.
 
+### Sicherheit
+- Zugangsdaten werden nur noch per HTTPS an spiele-offensive.de gesendet, auch wenn das
+  Loginformular ein anderes Ziel angibt.
+- Spiele- und Kapitel-Links werden nur noch von spiele-offensive.de bzw. dem Happyshops-
+  Medienserver übernommen; andere Adressen werden verworfen.
+- Beim Anmelden über das Formular wird eine noch bestehende Sitzung zuerst beendet, statt sie zu
+  übernehmen (sie könnte zu einem anderen Konto gehören).
+- Der Fortsetzen-Stand wird je Konto getrennt gespeichert; der bisherige Stand wird beim ersten
+  Start übernommen.
+- Kapitel-Indizes der Videoseite werden begrenzt; ein manipulierter Riesen-Index ließ die App
+  vorher hängen.
+
 ## [1.1.0] – 2026-11-17
 
 ### Neu

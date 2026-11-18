@@ -61,8 +61,8 @@ Diese Punkte sind bewusst so umgesetzt und gelten nicht als neue Lücke:
 - **Zugangsdaten** liegen nur Base64-verschleiert, aber **nicht verschlüsselt** im localStorage
   der App auf dem TV. Wer Zugriff auf den Speicher des TVs hat (z. B. per Developer Mode),
   kann sie auslesen. Mit der roten Taste (Abmelden) werden sie gelöscht.
-- `config.xml` erlaubt mit `<access origin="*">` Netzwerkzugriffe auf beliebige Server. Das ist
-  nötig, weil die Tizen-Web-Runtime sonst die Anfragen an spiele-offensive.de blockiert. Die App
-  selbst ruft nur spiele-offensive.de und den Happyshops-Medienserver auf.
+- `config.xml` erlaubt mit `<access origin="*">` Netzwerkzugriffe auf beliebige Server. Der Code
+  prüft aber selbst jede Zieladresse: Anfragen mit Cookies und Zugangsdaten gehen nur per HTTPS an
+  spiele-offensive.de, Videos zusätzlich nur an den Happyshops-Medienserver.
 - Die App hat keinen eigenen Server und sendet keine Daten an Dritte. Sie spricht ausschließlich
   mit den oben genannten Diensten.

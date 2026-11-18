@@ -11,6 +11,8 @@ var Api = (function () {
     var BASE = 'https://www.spiele-offensive.de';
     var URL_LOGIN = BASE + '/index.php?cmd=login&z=kundenbereich';
     var URL_RIGHTS = BASE + '/index.php?cmd=videorechte';
+    var URL_LOGOUT = BASE + '/index.php?cmd=logout';
+    var MAX_CHAPTER_INDEX = 500;
     var MEDIA = 'https://mediaservice.happyshops.com/ANY/Article/';
 
     var MOCK = /[?&]mock\b/.test(location.search);
@@ -26,6 +28,22 @@ var Api = (function () {
     }
 
     function setCredentials(c) { credentials = c; }
+
+    // ------------------------------------------------------- Erlaubte Server
+
+    /** Nur diese Server bekommen Anfragen (mit Cookies bzw. Zugangsdaten). */
+    function isSiteUrl(url) {
+        return /^https:\/\/(www\.)?spiele-offensive\.de(\/|$)/i.test(url);
+    }
+
+    /** Videos duerfen zusaetzlich vom Happyshops-Medienserver kommen. */
+    function isMediaUrl(url) {
+        return isSiteUrl(url) || /^https:\/\/mediaservice\.happyshops\.com\//i.test(url);
+    }
+
+    function unsafeUrl(url) {
+        return { code: 'unsafe_url', message: 'Unerwartete Zieladresse, Anfrage blockiert: ' + url };
+    }
 
     // ------------------------------------------------------------------ Login
 
@@ -64,30 +82,53 @@ var Api = (function () {
         };
     }
 
-    /** cb(err, rightsHtml) */
-    function login(cb) {
+    /**
+     * Anmelden. cb(err)
+     * fresh=true (Login ueber das Formular): eine noch bestehende Sitzung wird nicht uebernommen,
+     * sondern zuerst beendet - sie koennte zu einem anderen Konto gehoeren.
+     */
+    function login(cb, fresh) {
         if (MOCK) { return setTimeout(function () { cb(null); }, 300); }
         if (!credentials) { return cb({ code: 'no_credentials', message: 'Keine Zugangsdaten' }); }
 
         Http.get(URL_LOGIN, function (err, res) {
             if (err) { return cb(err); }
-            if (isLoggedIn(res.text)) { return cb(null); } // Session besteht noch
+            if (!isLoggedIn(res.text)) { return submitLogin(res, cb); }
+            if (!fresh) { return cb(null); } // Session besteht noch
 
-            var form = parseLoginForm(res.text, res.url);
-            if (!form) { return cb({ code: 'parse', message: 'Loginformular nicht gefunden' }); }
-
-            var fields = [[form.userField, credentials.user], [form.passField, credentials.pass]]
-                .concat(form.fields);
-            Http.post(form.action, Http.encodeForm(fields, res.charset), function (err2, res2) {
-                if (err2) { return cb(err2); }
-                if (isLoggedIn(res2.text)) { return cb(null); }
-                cb({ code: 'login_failed', message: 'Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.' });
+            Http.get(URL_LOGOUT, function (errOut) {
+                if (errOut) { return cb(errOut); }
+                Http.get(URL_LOGIN, function (err2, res2) {
+                    if (err2) { return cb(err2); }
+                    if (isLoggedIn(res2.text)) {
+                        return cb({ code: 'logout_failed',
+                            message: 'Die bestehende Sitzung konnte nicht beendet werden. Bitte erneut versuchen.' });
+                    }
+                    submitLogin(res2, cb);
+                });
             });
+        });
+    }
+
+    /** Loginformular aus der geladenen Seite ausfuellen und absenden. */
+    function submitLogin(res, cb) {
+        var form = parseLoginForm(res.text, res.url);
+        if (!form) { return cb({ code: 'parse', message: 'Loginformular nicht gefunden' }); }
+        // Zugangsdaten nur an Spiele-Offensive senden, egal was im Formular steht
+        if (!isSiteUrl(form.action)) { return cb(unsafeUrl(form.action)); }
+
+        var fields = [[form.userField, credentials.user], [form.passField, credentials.pass]]
+            .concat(form.fields);
+        Http.post(form.action, Http.encodeForm(fields, res.charset), function (err, res2) {
+            if (err) { return cb(err); }
+            if (isLoggedIn(res2.text)) { return cb(null); }
+            cb({ code: 'login_failed', message: 'Anmeldung fehlgeschlagen. Bitte E-Mail und Passwort prüfen.' });
         });
     }
 
     /** Laedt eine Seite, die einen Login braucht; meldet sich bei Bedarf (erneut) an. */
     function getAuthed(url, cb) {
+        if (!isSiteUrl(url)) { return cb(unsafeUrl(url)); }
         Http.get(url, function (err, res) {
             if (err) { return cb(err); }
             if (isLoggedIn(res.text)) { return cb(null, res.text); }
@@ -144,11 +185,13 @@ var Api = (function () {
             var href = links[i].getAttribute('href');
             var m = /-(\d+)\.html/.exec(href);
             if (!m || seen[m[1]]) { continue; }
+            var url = Util.resolveUrl(href, BASE + '/');
+            if (!isSiteUrl(url)) { continue; }
             seen[m[1]] = true;
             games.push({
                 id: m[1],
                 title: Util.text(links[i]),
-                url: Util.resolveUrl(href, BASE + '/'),
+                url: url,
                 image: articleImage(m[1]),              // Originalgroesse
                 imageSmall: articleImage(m[1], '200x200') // Fallback
             });
@@ -168,20 +211,26 @@ var Api = (function () {
 
     /** Liefert { title, chapters: [{ title, url }] } */
     function parseVideoPage(html) {
-        var urls = [], m;
-        var re = /playlist\[(\d+)\]\s*=\s*['"]([^'"]+)['"]/g;
+        // Nur tatsaechlich vorhandene Indizes durchgehen (nicht 0..max), max. Index begrenzen
+        var urls = {}, indices = [], m;
+        var re = /playlist\[(\d{1,4})\]\s*=\s*['"]([^'"]+)['"]/g;
         while ((m = re.exec(html)) !== null) {
-            urls[parseInt(m[1], 10)] = m[2];
+            var n = parseInt(m[1], 10);
+            if (n > MAX_CHAPTER_INDEX) { continue; }
+            if (!urls.hasOwnProperty(n)) { indices.push(n); }
+            urls[n] = m[2];
         }
+        indices.sort(function (a, b) { return a - b; });
 
         var doc = Util.parseHtml(html);
         var chapters = [];
-        for (var i = 0; i < urls.length; i++) {
-            if (!urls[i]) { continue; }
-            var el = doc.getElementById('playlist_' + i);
+        for (var i = 0; i < indices.length; i++) {
+            var url = Util.resolveUrl(urls[indices[i]], BASE + '/');
+            if (!isMediaUrl(url)) { continue; }
+            var el = doc.getElementById('playlist_' + indices[i]);
             chapters.push({
-                title: el ? Util.text(el) : 'Kapitel ' + i,
-                url: Util.resolveUrl(urls[i], BASE + '/')
+                title: el ? Util.text(el) : 'Kapitel ' + indices[i],
+                url: url
             });
         }
 
@@ -203,7 +252,7 @@ var Api = (function () {
 
     function logout() {
         credentials = null;
-        if (!MOCK) { Http.get(BASE + '/index.php?cmd=logout', function () {}); }
+        if (!MOCK) { Http.get(URL_LOGOUT, function () {}); }
     }
 
     return {
@@ -216,6 +265,8 @@ var Api = (function () {
         // fuer Tests
         _parseLoginForm: parseLoginForm,
         _parseGames: parseGames,
-        _parseVideoPage: parseVideoPage
+        _parseVideoPage: parseVideoPage,
+        _isSiteUrl: isSiteUrl,
+        _isMediaUrl: isMediaUrl
     };
 }());

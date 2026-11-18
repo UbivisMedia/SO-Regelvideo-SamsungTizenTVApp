@@ -4,9 +4,31 @@
  */
 var Progress = (function () {
     'use strict';
-    var KEY = 'so_progress';
+    var LEGACY_KEY = 'so_progress'; // Version 1.1.0: ein Stand fuer alle Konten
+    var KEY = LEGACY_KEY;
     var MAX_ENTRIES = 200;
     var cache = null;
+
+    /** Einfacher Hash (djb2), damit die E-Mail-Adresse nicht im Schluesselnamen steht. */
+    function hash(s) {
+        var h = 5381;
+        for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) | 0; }
+        return (h >>> 0).toString(16);
+    }
+
+    /** Fortschritt getrennt je Konto speichern. Ohne Konto (Mock) gilt der allgemeine Schluessel. */
+    function setAccount(user) {
+        var name = (user || '').replace(/^\s+|\s+$/g, '').toLowerCase();
+        KEY = name ? LEGACY_KEY + '_' + hash(name) : LEGACY_KEY;
+        cache = null;
+        if (KEY === LEGACY_KEY) { return; }
+        // Einmalige Uebernahme des alten, kontounabhaengigen Stands aus Version 1.1.0
+        try {
+            var legacy = localStorage.getItem(LEGACY_KEY);
+            if (legacy && !localStorage.getItem(KEY)) { localStorage.setItem(KEY, legacy); }
+            if (legacy) { localStorage.removeItem(LEGACY_KEY); }
+        } catch (e) {}
+    }
 
     function loadAll() {
         if (cache) { return cache; }
@@ -54,5 +76,5 @@ var Progress = (function () {
         return Math.min(1, (p.c + inChapter) / p.n);
     }
 
-    return { get: get, save: save, clear: clear, fraction: fraction };
+    return { setAccount: setAccount, get: get, save: save, clear: clear, fraction: fraction };
 }());
