@@ -4,7 +4,7 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach
 [Semantic Versioning](https://semver.org/lang/de/). Die Versionsnummer steht auch in `config.xml`.
 
-## [Unveröffentlicht]
+## [1.2.0] – 2026-11-18
 
 ### Neu
 - GitHub-Workflow „Release erstellen“ (manuell startbar): baut die `.wgt` und veröffentlicht sie
@@ -73,5 +73,6 @@ Erste Version, auf einem Samsung-TV getestet (Installation per Apps2Samsung).
 - ES5-Code für das WebKit von Tizen 2.3; eigene Zeichensatz-Dekodierung (ISO-8859-1/UTF-8).
 - Player-Overlays auf eigenen Compositing-Ebenen, Fortschritt per `transform` statt `width`.
 
+[1.2.0]: https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/tree/v1.0.0
