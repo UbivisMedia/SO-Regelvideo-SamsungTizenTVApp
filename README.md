@@ -24,9 +24,11 @@ von spiele-offensive.de mit dem eigenen Kundenkonto.
 | Ansicht | Taste | Aktion |
 |---|---|---|
 | Login | ▲ ▼ / OK | Feld wählen / Bildschirmtastatur öffnen bzw. Anmelden |
+| | BLAU | mit gespeicherten Zugangsdaten neu anmelden (falls vorhanden) |
 | Spieleauswahl | Pfeiltasten / OK | Spiel wählen / Video starten |
 | | ROT | Abmelden (gespeicherte Zugangsdaten löschen) |
 | | GRÜN | Liste neu laden |
+| | BLAU | neu anmelden mit gespeicherten Zugangsdaten (alte Sitzung wird beendet) |
 | | ZURÜCK | App beenden |
 | Player | OK / ⏯ | Play/Pause |
 | | ◀ ▶ / ⏪ ⏩ | 10 s zurück/vor |
@@ -82,7 +84,7 @@ npx http-server -p 8080 .
 ```
 
 Tasten im Browser: Pfeiltasten, Enter, Backspace/Esc = Zurück, Leertaste = Play/Pause,
-Bild↑/Bild↓ = Kapitel vor/zurück, R = Abmelden, G = Neu laden.
+Bild↑/Bild↓ = Kapitel vor/zurück, R = Abmelden, G = Neu laden, D = neu anmelden (Spieleauswahl) bzw. Diagnose (Player).
 
 ## Auf den Fernseher bringen (empfohlen: Apps2Samsung)
 
@@ -138,8 +140,10 @@ standardmäßig aus; ggf. unter *Project Properties → Tizen Studio → Package
   Challenge (403). Ob die Requests des TVs durchgelassen werden, muss auf dem Gerät getestet werden.
   Die App meldet diesen Fall gesondert. Das Start-Intro (`regelvideo_splash_regel.mp4`) liegt ebenfalls
   auf diesem Server; schlägt es fehl, springt der Player automatisch zum ersten Kapitel.
-- **Session-Cookies:** Die Tizen-Web-Runtime verwaltet Cookies für XHR selbst; `<access origin="*">`
-  in `config.xml` hebt die Same-Origin-Beschränkung auf. Muss ebenfalls am Gerät verifiziert werden.
+- **Session-Cookies:** Die Tizen-Web-Runtime verwaltet Cookies für XHR selbst; die `<access>`-Einträge
+  in `config.xml` (nur spiele-offensive.de und Happyshops) heben dafür die Same-Origin-Beschränkung auf.
+  Nach einem App-Neustart kann die alte Sitzung nur noch „halb“ gültig sein; die App meldet sich dann
+  automatisch frisch an. Notfalls hilft die **blaue Taste** (neu anmelden mit gespeicherten Daten).
 - **Zugangsdaten** liegen Base64-verschleiert (nicht verschlüsselt) im localStorage der App.
 - **BoardGameGeek** als Bildquelle ist nicht eingebaut: Die BGG-XML-API erfordert inzwischen eine
   registrierte Anwendung/Token und eine Namenssuche, die bei deutschen Titeln oft ungenau ist.

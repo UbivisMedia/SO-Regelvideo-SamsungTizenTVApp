@@ -11,6 +11,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
   als GitHub-Release mit den Notizen aus diesem Changelog.
 - MIT-Lizenz (`LICENSE`) und Hinweis im README, dass es sich um ein inoffizielles Projekt handelt.
 - `SECURITY.md` mit Meldeweg für Sicherheitslücken (vertraulich über GitHub) und Geltungsbereich.
+- **Blaue Taste** in Spieleauswahl und Login: mit den gespeicherten Zugangsdaten neu anmelden
+  (bestehende Sitzung wird beendet, kein erneutes Eintippen nötig).
+
+### Behoben
+- Nach einem App-Neustart war die Sitzung teilweise ungültig und man musste sich ab- und neu
+  anmelden. Ist eine Seite nach dem Login weiterhin nicht angemeldet, beendet die App die Sitzung
+  jetzt selbst und meldet sich mit den gespeicherten Daten frisch an.
 
 ### Sicherheit
 - Zugangsdaten werden nur noch per HTTPS an spiele-offensive.de gesendet, auch wenn das
@@ -23,6 +30,8 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
   Start übernommen.
 - Kapitel-Indizes der Videoseite werden begrenzt; ein manipulierter Riesen-Index ließ die App
   vorher hängen.
+- `<access origin="*">` aus `config.xml` entfernt; Netzwerkzugriff nur noch auf spiele-offensive.de
+  und den Happyshops-Medienserver (am TV getestet).
 
 ## [1.1.0] – 2026-11-17
 

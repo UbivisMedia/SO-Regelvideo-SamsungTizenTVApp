@@ -27,6 +27,7 @@ var App = (function () {
 
     function showLogin(error) {
         var creds = CredStore.load();
+        Util.toggleClass(Util.$('login-relogin'), 'hidden', !creds);
         setView(LoginView);
         LoginView.show({ user: creds ? creds.user : '', error: error });
     }
@@ -40,6 +41,21 @@ var App = (function () {
             if (err) { return LoginView.showError(errorText(err)); }
             CredStore.save(user, pass);
             Progress.setAccount(user);
+            LoginView.hide();
+            loadGames();
+        }, true);
+    }
+
+    /** Mit den gespeicherten Zugangsdaten frisch anmelden (alte Sitzung wird beendet). */
+    function relogin() {
+        var creds = CredStore.load();
+        if (!creds) { return showLogin('Keine gespeicherten Zugangsdaten. Bitte anmelden.'); }
+        Api.setCredentials(creds);
+        Progress.setAccount(creds.user);
+        Util.loading(true, 'Neu anmelden…');
+        Api.login(function (err) {
+            Util.loading(false);
+            if (err) { return showLogin(errorText(err)); }
             LoginView.hide();
             loadGames();
         }, true);
@@ -110,9 +126,13 @@ var App = (function () {
         if (!handled && view === GridView) {
             if (key === 'RED') { logout(); handled = true; }
             else if (key === 'GREEN') { loadGames(); handled = true; }
+            else if (key === 'BLUE') { relogin(); handled = true; }
             else if (key === 'BACK') { exitApp(); handled = true; }
         }
-        if (!handled && view === LoginView && key === 'BACK') { exitApp(); handled = true; }
+        if (!handled && view === LoginView) {
+            if (key === 'BACK') { exitApp(); handled = true; }
+            else if (key === 'BLUE' && CredStore.load()) { relogin(); handled = true; }
+        }
 
         if (handled) { evt.preventDefault(); }
     }

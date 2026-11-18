@@ -132,17 +132,25 @@ var Api = (function () {
         Http.get(url, function (err, res) {
             if (err) { return cb(err); }
             if (isLoggedIn(res.text)) { return cb(null, res.text); }
-            login(function (err2) {
-                if (err2) { return cb(err2); }
-                Http.get(url, function (err3, res3) {
-                    if (err3) { return cb(err3); }
-                    if (!isLoggedIn(res3.text)) {
-                        return cb({ code: 'login_failed', message: 'Anmeldung fehlgeschlagen.' });
-                    }
-                    cb(null, res3.text);
-                });
-            });
+            loginAndGet(url, false, cb);
         });
+    }
+
+    /**
+     * Anmelden und Seite erneut laden. Ist sie danach immer noch nicht angemeldet, gilt die
+     * Sitzung nur halb (z. B. nach App-Neustart: Login-Seite meldet "angemeldet", die Seite selbst
+     * nicht) -> einmal komplett abmelden und mit den Zugangsdaten frisch anmelden.
+     */
+    function loginAndGet(url, fresh, cb) {
+        login(function (err) {
+            if (err) { return cb(err); }
+            Http.get(url, function (err2, res2) {
+                if (err2) { return cb(err2); }
+                if (isLoggedIn(res2.text)) { return cb(null, res2.text); }
+                if (!fresh) { return loginAndGet(url, true, cb); }
+                cb({ code: 'login_failed', message: 'Anmeldung fehlgeschlagen.' });
+            });
+        }, fresh);
     }
 
     function getPage(url, mockKey, cb) {
