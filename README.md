@@ -3,6 +3,11 @@
 Tizen-Web-App (Samsung Smart TV, **Tizen 2.3+**) zum Abspielen der Spielregel-Videos
 von spiele-offensive.de mit dem eigenen Kundenkonto.
 
+> **Hinweis:** Inoffizielles Projekt, nicht mit Spiele-Offensive.de oder Happyshops verbunden
+> und von diesen weder unterstützt noch geprüft. Die App benötigt ein eigenes Kundenkonto mit
+> erworbenen Videorechten. Alle Inhalte (Videos, Bilder, Texte, Marken) gehören ihren jeweiligen
+> Inhabern und sind nicht Teil dieses Repositorys bzw. der Lizenz.
+
 ## Funktionen
 
 - Login mit E-Mail/Passwort des Spiele-Offensive-Kundenkontos (wird lokal in der App gespeichert)
@@ -141,3 +146,9 @@ standardmäßig aus; ggf. unter *Project Properties → Tizen Studio → Package
   Die Bilder der Spiele-Offensive decken die meisten Spiele ab.
 - Sehr alte Web-Engines: falls die Wiedergabe per `<video>` auf einem Modell hakt, wäre der
   Samsung-**AVPlay**-API der robustere Weg.
+
+## Lizenz
+
+Der Quellcode dieses Projekts steht unter der [MIT-Lizenz](LICENSE).
+Sie gilt nur für den Code in diesem Repository, nicht für die Inhalte und Dienste von
+Spiele-Offensive.de bzw. Happyshops, auf die die App zugreift.
