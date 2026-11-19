@@ -1,7 +1,7 @@
-# SO Regelvideos – Tizen-TV-App
+# SO Regelvideos – Samsung-TV-App
 
-Tizen-Web-App (Samsung Smart TV, **Tizen 2.3+**) zum Abspielen der Spielregel-Videos
-von spiele-offensive.de mit dem eigenen Kundenkonto.
+Die Spielregel-Videos von [spiele-offensive.de](https://www.spiele-offensive.de) direkt auf dem
+Samsung-Fernseher ansehen – mit dem eigenen Kundenkonto, bequem per Fernbedienung.
 
 > **Hinweis:** Inoffizielles Projekt, nicht mit Spiele-Offensive.de oder Happyshops verbunden
 > und von diesen weder unterstützt noch geprüft. Die App benötigt ein eigenes Kundenkonto mit
@@ -10,153 +10,108 @@ von spiele-offensive.de mit dem eigenen Kundenkonto.
 
 ## Funktionen
 
-- Login mit E-Mail/Passwort des Spiele-Offensive-Kundenkontos (wird lokal in der App gespeichert)
-- Automatischer (Re-)Login, wenn die Session abgelaufen ist
-- Liste der Spiele mit Videorechten (`index.php?cmd=videorechte`) als quadratische Kacheln mit Spielbild
-- Spiele alphabetisch sortiert (Umlaute richtig einsortiert, unabhängig vom TV-Browser)
-- Player mit Kapiteln: automatischer Wechsel zum nächsten Kapitel, Kapitelauswahl per Liste
-- **Fortsetzen:** Der Fortschritt pro Spiel wird auf dem TV gespeichert; beim erneuten Öffnen
-  fragt die App „Fortsetzen“ oder „Von vorne“. Die Kacheln zeigen den Fortschritt als Balken.
-  Nach dem letzten Kapitel wird der Stand gelöscht.
+- Anmeldung mit E-Mail-Adresse und Passwort deines Spiele-Offensive-Kundenkontos
+  (wird gespeichert, du musst sie nur einmal eingeben)
+- Alle Spiele, für die du Videorechte hast, als Kacheln mit Spielbild – alphabetisch sortiert
+- Videos mit Kapiteln: Kapitel laufen automatisch nacheinander, einzelne Kapitel lassen sich
+  direkt anwählen
+- **Fortsetzen:** Die App merkt sich je Spiel, wo du aufgehört hast, und fragt beim nächsten Öffnen
+  „Fortsetzen“ oder „Von vorne“. Angefangene Spiele zeigen einen Fortschrittsbalken.
 
-## Bedienung (Fernbedienung)
+## Voraussetzungen
+
+- Samsung-Smart-TV mit **Tizen** (ab Modelljahr 2015 / Tizen 2.3)
+- Ein PC (Windows, macOS oder Linux) im selben Netzwerk – nur für die Installation
+- Ein Kundenkonto bei spiele-offensive.de mit gekauften Videorechten
+
+## Installation
+
+Die App wird mit **[Apps2Samsung](https://www.apps2samsung.com)** installiert, einem kostenlosen
+Programm für den PC ([GitHub](https://github.com/Apps2Samsung/Apps2Samsung)).
+
+### 1. Entwicklermodus am Fernseher einschalten (einmalig)
+
+1. Am TV die Übersicht **Apps** öffnen.
+2. Auf der Fernbedienung nacheinander **1 2 3 4 5** drücken.
+3. **Developer Mode** auf *On* stellen und die **IP-Adresse des PCs** eintragen,
+   auf dem Apps2Samsung läuft.
+4. Fernseher neu starten (komplett aus- und wieder einschalten).
+
+### 2. App installieren
+
+1. **Apps2Samsung** auf dem PC starten. Der Fernseher wird im Netzwerk gesucht und oben links angezeigt.
+2. Unter **Installieren** in der Rubrik **Andere** die App **SO-Regelvideos** auswählen
+   (oder oben nach „SO-Regelvideos“ suchen).
+3. Installieren – fertig. Die App erscheint danach in der App-Übersicht des Fernsehers.
+
+**Updates** werden ebenfalls über Apps2Samsung installiert, sobald eine neue Version erscheint.
+
+### Alternativ: Datei manuell installieren
+
+Die fertige App-Datei gibt es auch direkt zum Herunterladen:
+[SOVideoPlayer.wgt (neueste Version)](https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/releases/latest/download/SOVideoPlayer.wgt)
+· [alle Versionen](https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/releases)
+
+In Apps2Samsung dann **Eine Datei installieren…** wählen und die heruntergeladene Datei angeben.
+
+## Bedienung
+
+Beim ersten Start fragt die App nach E-Mail-Adresse und Passwort. Mit **OK** öffnet sich die
+Bildschirmtastatur, danach **Anmelden** wählen.
 
 | Ansicht | Taste | Aktion |
 |---|---|---|
-| Login | ▲ ▼ / OK | Feld wählen / Bildschirmtastatur öffnen bzw. Anmelden |
-| | BLAU | mit gespeicherten Zugangsdaten neu anmelden (falls vorhanden) |
+| Anmeldung | ▲ ▼ / OK | Feld wählen / Bildschirmtastatur öffnen bzw. anmelden |
+| | 🔵 BLAU | mit den gespeicherten Zugangsdaten neu anmelden |
 | Spieleauswahl | Pfeiltasten / OK | Spiel wählen / Video starten |
-| | ROT | Abmelden (gespeicherte Zugangsdaten löschen) |
-| | GRÜN | Liste neu laden |
-| | BLAU | neu anmelden mit gespeicherten Zugangsdaten (alte Sitzung wird beendet) |
+| | 🔴 ROT | abmelden (gespeicherte Zugangsdaten werden gelöscht) |
+| | 🟢 GRÜN | Liste aktualisieren |
+| | 🔵 BLAU | neu anmelden mit den gespeicherten Zugangsdaten |
 | | ZURÜCK | App beenden |
-| Player | OK / ⏯ | Play/Pause |
-| | ◀ ▶ / ⏪ ⏩ | 10 s zurück/vor |
-| | ▲ ▼ | Kapitelliste öffnen, Kapitel wählen, OK startet es |
+| Video | OK / ⏯ | Pause / Weiter |
+| | ◀ ▶ / ⏪ ⏩ | 10 Sekunden zurück / vor |
+| | ▲ ▼ | Kapitelliste öffnen und Kapitel wählen, OK startet es |
 | | CH+ / CH− (⏭ ⏮) | nächstes / vorheriges Kapitel |
-| | ZURÜCK / ⏹ | zurück zur Spieleauswahl (Position wird gespeichert) |
-| | BLAU | Diagnose-Anzeige ein/aus (Desktop: D) |
-| Fortsetzen-Dialog | ◀ ▶ / OK | „Fortsetzen“ oder „Von vorne“ wählen |
+| | ZURÜCK / ⏹ | zurück zur Spieleauswahl (die Stelle wird gemerkt) |
+| | 🔵 BLAU | technische Diagnose-Anzeige ein/aus |
+| Fortsetzen-Frage | ◀ ▶ / OK | „Fortsetzen“ oder „Von vorne“ wählen |
 
-## Projektstruktur
+## Häufige Fragen
 
-```
-config.xml          Tizen-Manifest (Profil tv, required_version 2.3, Privilegien)
-index.html          Einstiegsseite mit den drei Ansichten
-css/style.css       Layout für 1920x1080
-js/keys.js          Registrierung/Mapping der Fernbedienungstasten
-js/util.js          DOM-/HTML-Hilfen
-js/http.js          XHR inkl. Zeichensatz-Behandlung (Seite ist ISO-8859-1)
-js/credstore.js     Speicherung der Zugangsdaten (localStorage)
-js/progress.js      Wiedergabe-Fortschritt pro Spiel (Fortsetzen)
-js/api.js           Login, Videorechte-Liste, Videoseite parsen
-js/view-*.js        Ansichten Login / Kacheln / Player
-js/app.js           Ablaufsteuerung, Tastenverteilung
-.dev/               Beispiel-HTML-Seiten (nur für Entwicklung)
-```
+**Die Spieleliste ist leer oder die Anmeldung schlägt fehl.**
+Die App versucht sich in diesem Fall automatisch neu anzumelden. Hilft das nicht, die
+**blaue Taste** drücken (neu anmelden mit den gespeicherten Daten). Prüfe außerdem, ob du dich mit
+denselben Daten auf spiele-offensive.de anmelden kannst und dort Videorechte hast.
 
-Der Code ist bewusst **ES5** (kein `let`/`const`, keine Arrow-Functions, kein `fetch`/`Promise`),
-weil die Web-Engine von Tizen 2.3 ein älteres WebKit ist.
+**Es erscheint „Die Spiele-Offensive blockiert den Zugriff“.**
+Die Website nutzt einen Schutzdienst (Cloudflare), der Zugriffe zeitweise blockieren kann.
+Später erneut versuchen (grüne Taste).
 
-## Wie die Daten ermittelt werden
+**Das Intro-Video wird übersprungen.**
+Das ist normal, wenn es nicht geladen werden kann – die App springt dann direkt zum ersten Kapitel.
 
-- **Login:** Die Loginseite wird geladen, das Formular mit Passwortfeld ausgelesen (inkl. des
-  dynamischen Feldes `doubletracker`) und an `/index.php?seite=13` gesendet. Feldwerte werden wie
-  vom Browser im Zeichensatz der Seite (ISO-8859-1) kodiert. Erfolg = Seite enthält einen Logout-Link.
-- **Spieleliste:** alle Links `/Regelvideo/<Name>-<Artikelnummer>.html` der Videorechte-Seite.
-- **Bild:** `https://mediaservice.happyshops.com/ANY/Article/<Artikelnr. 12-stellig>/<Artikelnr>.jpg`
-  (Fallback `size=200x200/`). Fehlt ein Bild, liefert der Server `BildNichtGefunden.jpg`
-  (1200×1200) – das wird erkannt und durch eine Platzhalter-Kachel ersetzt.
-- **Kapitel:** `playlist[n]='…mp4'` aus dem Skript der Videoseite, Titel aus `#playlist_n`.
+**Wie entferne ich meine Zugangsdaten vom Fernseher?**
+In der Spieleauswahl die **rote Taste** drücken (abmelden). Die gespeicherten Daten werden gelöscht.
 
-## Entwicklung im Desktop-Browser (Mock-Modus)
+## Datenschutz
 
-Im normalen Browser blockiert CORS den Zugriff auf spiele-offensive.de. Für UI-Tests gibt es einen
-Mock-Modus, der die Beispielseiten aus `.dev/HTML-Beispiele/` verwendet:
+- E-Mail-Adresse und Passwort werden **nur auf deinem Fernseher** gespeichert
+  (verschleiert, aber nicht verschlüsselt) und nur an spiele-offensive.de gesendet.
+- Die App kommuniziert ausschließlich mit spiele-offensive.de und dem Bild- und Videoserver
+  von Happyshops. Es gibt keinen eigenen Server, keine Werbung und kein Tracking.
+- Der Wiedergabe-Fortschritt wird ebenfalls nur auf dem Fernseher gespeichert, getrennt je Konto.
 
-> `.dev/` ist nicht im Repository (die Seiten enthalten persönliche Daten). Lege dort eigene, im
-> eingeloggten Browser gespeicherte Kopien ab: `videorechte.html` (Seite `index.php?cmd=videorechte`)
-> und `videoseite.tml` (eine beliebige Regelvideo-Seite).
+## Mithelfen, Fehler melden
 
-```
-npx http-server -a 127.0.0.1 -p 8080 .
-# dann im Browser:  http://localhost:8080/index.html?mock
-```
-
-**Wichtig:** `-a 127.0.0.1` nicht weglassen. Ohne die Option lauscht http-server auf allen
-Netzwerkschnittstellen, und andere Geräte im Netz könnten die Beispielseiten in `.dev/` (mit
-persönlichen Daten) abrufen.
-
-Tasten im Browser: Pfeiltasten, Enter, Backspace/Esc = Zurück, Leertaste = Play/Pause,
-Bild↑/Bild↓ = Kapitel vor/zurück, R = Abmelden, G = Neu laden, D = neu anmelden (Spieleauswahl) bzw. Diagnose (Player).
-
-## Auf den Fernseher bringen (empfohlen: Apps2Samsung)
-
-1. Am TV den **Developer Mode** aktivieren: *Apps* öffnen, `1 2 3 4 5` auf der Fernbedienung,
-   Developer Mode *On*, IP des PCs eintragen, auf dem Apps2Samsung läuft, TV neu starten.
-2. Paket bauen: `build-wgt.cmd` (Doppelklick oder in der Konsole `.\build-wgt.cmd`)
-   → erzeugt `dist/SOVideoPlayer.wgt` (nur App-Dateien, ohne `.dev/`).
-3. In **Apps2Samsung** den TV auswählen, *eigene .wgt-Datei* wählen und installieren.
-   Apps2Samsung kümmert sich um die Signierung.
-
-Fertige Pakete gibt es auch unter
-[Releases](https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/releases); Direktlink
-auf die jeweils neueste Version:
-<https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/releases/latest/download/SOVideoPlayer.wgt>
-
-## Neues Release veröffentlichen
-
-1. Version in `config.xml` erhöhen (`<widget … version="x.y.z">`).
-2. In `CHANGELOG.md` den Abschnitt *Unveröffentlicht* in `## [x.y.z] – Datum` umbenennen.
-3. Committen und pushen.
-4. Auf GitHub: *Actions* → **Release erstellen** → *Run workflow*.
-   Der Workflow baut die `.wgt`, legt Tag `vx.y.z` und das Release mit den Changelog-Notizen an.
-   Existiert das Release schon, bricht er ab.
-
-## Alternativ: Tizen Studio / Tizen CLI
-
-1. **Tizen Studio** installieren, im Package Manager unter *Extension SDK* die
-   **TV Extensions** (inkl. `tv-samsung-2.3`/`Samsung TV Extension`) installieren.
-2. Projekt importieren: *File → Import → Tizen → Tizen Project* (oder *General → Existing Projects*)
-   und diesen Ordner wählen.
-3. Im **Certificate Manager** ein **Samsung**-Zertifikat (Typ *TV*) anlegen – Samsung-Konto nötig.
-   Dabei die DUID des Fernsehers eintragen (oder Gerät beim Anlegen verbunden haben).
-4. Am TV den **Developer Mode** aktivieren: *Apps* öffnen, `1 2 3 4 5` auf der Fernbedienung,
-   Developer Mode *On*, IP des Entwicklungsrechners eintragen, TV neu starten.
-5. Im **Device Manager** den TV per IP verbinden, dann *Run As → Tizen Web Application*.
-
-Per Kommandozeile (Tizen CLI):
-
-```
-tizen build-web -- .
-tizen package -t wgt -s <Zertifikatsprofil> -- .buildResult
-sdb connect <TV-IP>
-tizen install -n SOVideoPlayer.wgt -- .buildResult
-tizen run -p SOVidPlay0.SOVideoPlayer
-```
-
-Der Ordner `.dev/` sollte nicht ins Paket – versteckte Dateien/Ordner (`.*`) schließt Tizen Studio
-standardmäßig aus; ggf. unter *Project Properties → Tizen Studio → Package → Excluded Resources* prüfen.
-
-## Bekannte Risiken / offene Punkte
-
-- **Cloudflare:** spiele-offensive.de steht hinter Cloudflare. Einfache Clients (curl) bekommen eine
-  Challenge (403). Ob die Requests des TVs durchgelassen werden, muss auf dem Gerät getestet werden.
-  Die App meldet diesen Fall gesondert. Das Start-Intro (`regelvideo_splash_regel.mp4`) liegt ebenfalls
-  auf diesem Server; schlägt es fehl, springt der Player automatisch zum ersten Kapitel.
-- **Session-Cookies:** Die Tizen-Web-Runtime verwaltet Cookies für XHR selbst; die `<access>`-Einträge
-  in `config.xml` (nur spiele-offensive.de und Happyshops) heben dafür die Same-Origin-Beschränkung auf.
-  Nach einem App-Neustart kann die alte Sitzung nur noch „halb“ gültig sein (leere Spieleliste); die App meldet sich dann
-  automatisch frisch an. Notfalls hilft die **blaue Taste** (neu anmelden mit gespeicherten Daten).
-- **Zugangsdaten** liegen Base64-verschleiert (nicht verschlüsselt) im localStorage der App.
-- **BoardGameGeek** als Bildquelle ist nicht eingebaut: Die BGG-XML-API erfordert inzwischen eine
-  registrierte Anwendung/Token und eine Namenssuche, die bei deutschen Titeln oft ungenau ist.
-  Die Bilder der Spiele-Offensive decken die meisten Spiele ab.
-- Sehr alte Web-Engines: falls die Wiedergabe per `<video>` auf einem Modell hakt, wäre der
-  Samsung-**AVPlay**-API der robustere Weg.
+- **Fehler oder Ideen:** gern als [Issue](https://github.com/UbivisMedia/SO-Regelvideo-SamsungTizenTVApp/issues)
+  melden – mit TV-Modell und App-Version.
+- **Selbst mitentwickeln:** Aufbau, Build und Ablauf für Pull Requests stehen in
+  [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Sicherheitslücken** bitte vertraulich melden, siehe [SECURITY.md](SECURITY.md).
+- Änderungen je Version: [CHANGELOG.md](CHANGELOG.md)
 
 ## Lizenz
 
-Der Quellcode dieses Projekts steht unter der [MIT-Lizenz](LICENSE).
-Sie gilt nur für den Code in diesem Repository, nicht für die Inhalte und Dienste von
-Spiele-Offensive.de bzw. Happyshops, auf die die App zugreift.
+Der Quellcode steht unter der [MIT-Lizenz](LICENSE). Sie gilt nur für den Code in diesem
+Repository, nicht für die Inhalte und Dienste von Spiele-Offensive.de bzw. Happyshops, auf die
+die App zugreift.

@@ -6,6 +6,10 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 
 ## [Unveröffentlicht]
 
+### Geändert
+- Dokumentation aufgeteilt: `README.md` nur noch für Installation (jetzt direkt aus dem
+  Apps2Samsung-Katalog) und Bedienung, technische Details und Ablauf für Beiträge in `CONTRIBUTING.md`.
+
 ### Sicherheit
 - Eingelesene Seiten werden vor dem Auswerten entschärft (`src`, `srcset`, `style`, `<link>`,
   `<iframe>` u. a. umbenannt), damit das alte WebKit keine Bilder oder andere Ressourcen von
