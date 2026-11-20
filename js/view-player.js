@@ -70,6 +70,65 @@ var PlayerView = (function () {
         }
     }
 
+    // ----------------------------------------------------------- Vorpuffern
+    // <video> laesst sich die Puffergroesse nicht vorschreiben. Stattdessen pausieren wir
+    // selbst, bis genug Vorlauf geladen ist: beim Kapitelstart und nach jedem Haenger.
+    // So gibt es eine kurze Wartezeit statt staendigem Stocken.
+    var START_BUFFER = 10;        // Sekunden Vorlauf vor dem Start eines Kapitels
+    var STALL_BUFFER = 20;        // Sekunden Vorlauf nach einem Haenger
+    var BUFFER_CHECK = 250;       // ms
+    var NO_PROGRESS_WAIT = 4000;  // ms ohne Fortschritt beim Laden -> trotzdem starten
+    var MAX_BUFFER_WAIT = 30000;  // ms maximale Wartezeit
+    var buffering = null;         // { target, started, lastAhead, lastGrowth, timer }
+
+    function bufferedAhead() {
+        var b = video.buffered, t = video.currentTime;
+        for (var i = 0; i < b.length; i++) {
+            if (b.start(i) <= t + 0.5 && b.end(i) >= t) { return Math.max(0, b.end(i) - t); }
+        }
+        return 0;
+    }
+
+    function startBuffering(target) {
+        stopBuffering();
+        var now = new Date().getTime();
+        buffering = { target: target, started: now, lastAhead: 0, lastGrowth: now, timer: null };
+        if (!video.paused) { video.pause(); }
+        checkBuffer();
+        if (buffering) { buffering.timer = setInterval(checkBuffer, BUFFER_CHECK); }
+    }
+
+    function stopBuffering() {
+        if (!buffering) { return; }
+        clearInterval(buffering.timer);
+        buffering = null;
+    }
+
+    function checkBuffer() {
+        if (!buffering) { return; }
+        var now = new Date().getTime();
+        var ahead = bufferedAhead();
+        var d = video.duration;
+        var remaining = isFinite(d) && d > 0 ? d - video.currentTime : Infinity;
+        var need = Math.min(buffering.target, Math.max(0, remaining - 0.5));
+
+        if (ahead > buffering.lastAhead + 0.1) { buffering.lastAhead = ahead; buffering.lastGrowth = now; }
+
+        var enough = video.readyState >= 3 && !seekPending && ahead >= need;
+        // Laedt der TV im Pausezustand nicht (weiter), nicht ewig warten - dann normal abspielen
+        var stuck = now - buffering.lastGrowth > NO_PROGRESS_WAIT;
+        var timeout = now - buffering.started > MAX_BUFFER_WAIT;
+
+        if (enough || stuck || timeout) {
+            stopBuffering();
+            setStatus(null);
+            safePlay();
+            showOsd();
+            return;
+        }
+        setStatus('Puffern… ' + Math.floor(ahead) + ' / ' + Math.ceil(need || buffering.target) + ' s');
+    }
+
     // ----------------------------------------------------------- Diagnose
     // Blaue Taste (Desktop: D) blendet Wiedergabe-Statistiken ein/aus.
     var stats = { waiting: 0, stalled: 0 }, debugTimer = null, lastFrames = null;
@@ -103,7 +162,8 @@ var PlayerView = (function () {
             'Puffer    ' + ahead.toFixed(1) + ' s voraus',
             'State     ready=' + video.readyState + ' net=' + video.networkState + (video.paused ? ' PAUSE' : ''),
             'Frames/s  ' + fps + '   verloren/s ' + drop + (f ? '   gesamt ' + f.dropped + '/' + f.total : ''),
-            'waiting   ' + stats.waiting + '   stalled ' + stats.stalled,
+            'waiting   ' + stats.waiting + '   stalled ' + stats.stalled +
+                (buffering ? '   VORPUFFERN ziel ' + buffering.target + ' s' : ''),
             'Video     ' + video.videoWidth + 'x' + video.videoHeight,
             'Fenster   ' + window.innerWidth + 'x' + window.innerHeight + ' @' + (window.devicePixelRatio || 1),
             'Kapitel   ' + (listVisible() ? 'offen' : 'zu') + '   OSD ' + (/\bhidden\b/.test(osd.className) ? 'aus' : 'an')
@@ -148,11 +208,17 @@ var PlayerView = (function () {
         });
         video.addEventListener('pause', function () { saveProgress(); });
         video.addEventListener('playing', function () { setStatus(null); });
-        video.addEventListener('waiting', function () { stats.waiting++; setStatus('Lade…'); });
+        video.addEventListener('waiting', function () {
+            stats.waiting++;
+            // Haenger waehrend der Wiedergabe: ordentlich Vorlauf sammeln statt Stop-and-Go
+            // (nach einem Sprung reicht der kleinere Vorlauf)
+            if (!buffering && chapters.length) { startBuffering(video.seeking ? START_BUFFER : STALL_BUFFER); }
+        });
         video.addEventListener('stalled', function () { stats.stalled++; });
         video.addEventListener('pause', function () { if (!video.ended) { showOsd(true); } });
         video.addEventListener('error', function () {
             if (!video.getAttribute('src')) { return; } // beim Schliessen
+            stopBuffering();
             // z.B. das Start-Intro liegt hinter Cloudflare -> automatisch weiter
             if (current + 1 < chapters.length) {
                 setStatus('Kapitel konnte nicht abgespielt werden – weiter…');
@@ -270,7 +336,8 @@ var PlayerView = (function () {
         } else {
             seekPending = false;
         }
-        safePlay();
+        // nicht sofort abspielen, sondern erst etwas Vorlauf laden (preload="auto")
+        startBuffering(START_BUFFER);
         if (game) { Progress.save(game.id, i, startAt || 0, 0, chapters.length); }
         if (listVisible()) { renderList(); }
         showOsd();
@@ -297,6 +364,7 @@ var PlayerView = (function () {
         Util.hide($('player-resume'));
         resumeEntry = null;
         chapters = []; // verhindert verzoegerte Kapitelwechsel nach dem Schliessen
+        stopBuffering();
         video.pause();
         video.removeAttribute('src');
         video.load();
@@ -309,7 +377,8 @@ var PlayerView = (function () {
     }
 
     function togglePlay() {
-        if (video.paused) { safePlay(); showOsd(); } else { video.pause(); }
+        if (buffering) { stopBuffering(); setStatus('Pausiert'); showOsd(true); return; }
+        if (video.paused) { setStatus(null); safePlay(); showOsd(); } else { video.pause(); }
     }
 
     function seek(delta) {
@@ -342,8 +411,8 @@ var PlayerView = (function () {
         switch (key) {
         case 'UP': case 'DOWN': showList(); return true;
         case 'ENTER': case 'PLAYPAUSE': togglePlay(); return true;
-        case 'PLAY': safePlay(); showOsd(); return true;
-        case 'PAUSE': video.pause(); return true;
+        case 'PLAY': stopBuffering(); setStatus(null); safePlay(); showOsd(); return true;
+        case 'PAUSE': if (buffering) { togglePlay(); } else { video.pause(); } return true;
         case 'LEFT': case 'RW': seek(-SEEK_STEP); return true;
         case 'RIGHT': case 'FF': seek(SEEK_STEP); return true;
         case 'NEXT': playChapter(current + 1); return true;

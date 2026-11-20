@@ -6,6 +6,12 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 
 ## [Unveröffentlicht]
 
+### Neu
+- **Vorpuffern im Player:** Jedes Kapitel startet erst, wenn ca. 10 s Video geladen sind; nach
+  einem Hänger sammelt der Player ca. 20 s Vorlauf, statt im Sekundentakt zu stocken. Während des
+  Wartens zeigt er „Puffern… x / y s“. Lädt der TV im Pausezustand nicht weiter, startet die
+  Wiedergabe nach wenigen Sekunden trotzdem.
+
 ### Geändert
 - Dokumentation aufgeteilt: `README.md` nur noch für Installation (jetzt direkt aus dem
   Apps2Samsung-Katalog) und Bedienung, technische Details und Ablauf für Beiträge in `CONTRIBUTING.md`.

@@ -87,6 +87,10 @@ denselben Daten auf spiele-offensive.de anmelden kannst und dort Videorechte has
 Die Website nutzt einen Schutzdienst (Cloudflare), der Zugriffe zeitweise blockieren kann.
 Später erneut versuchen (grüne Taste).
 
+**Was bedeutet „Puffern… 4 / 10 s“?**
+Die App lädt vor dem Start eines Kapitels (und nach einem Hänger) erst etwas Video vor, damit es
+danach flüssig läuft. Bei langsamer Internetverbindung dauert das ein paar Sekunden.
+
 **Das Intro-Video wird übersprungen.**
 Das ist normal, wenn es nicht geladen werden kann – die App springt dann direkt zum ersten Kapitel.
 
