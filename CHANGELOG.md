@@ -11,11 +11,6 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
   einem Hänger sammelt der Player ca. 20 s Vorlauf, statt im Sekundentakt zu stocken. Während des
   Wartens zeigt er „Puffern… x / y s“. Lädt der TV im Pausezustand nicht weiter, startet die
   Wiedergabe nach wenigen Sekunden trotzdem.
-- **Nächstes Kapitel vorladen:** Ein zweiter, unsichtbarer Player lädt gegen Ende eines Kapitels
-  bereits das nächste; beim Wechsel werden die Player nur getauscht, das nächste Kapitel startet
-  ohne Wartezeit. Kommt der TV mit zwei Videos gleichzeitig nicht zurecht (Fehler im laufenden
-  Kapitel), wird das Vorladen für die Sitzung abgeschaltet und das Kapitel an derselben Stelle
-  neu geladen. Stand des Vorladens in der Diagnose-Anzeige (blaue Taste).
 
 ### Geändert
 - Dokumentation aufgeteilt: `README.md` nur noch für Installation (jetzt direkt aus dem

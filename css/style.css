@@ -165,8 +165,7 @@ html, body {
 
 /* ---------- Player ---------- */
 #view-player { background: #000; }
-#video, #video2 { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; }
-#video.standby, #video2.standby { visibility: hidden; }
+#video { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #000; }
 
 #player-osd {
     position: absolute;
@@ -268,7 +267,7 @@ html, body {
 
 /* Overlays ueber dem Video auf eigene Compositing-Ebenen legen, damit Aenderungen
    (Fortschritt, Fokus) nicht das Video bzw. grosse Flaechen neu zeichnen lassen. */
-#video, #video2, #player-osd, #player-chapters, #chapter-list, #player-status, #player-debug {
+#video, #player-osd, #player-chapters, #chapter-list, #player-status, #player-debug {
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
 }

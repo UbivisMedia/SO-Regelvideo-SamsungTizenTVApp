@@ -67,10 +67,6 @@ Variable (`Util`, `Http`, `Api`, …) nach dem Muster `var Modul = (function () 
   (1200×1200) – das wird an der Größe erkannt und durch eine Platzhalter-Kachel ersetzt.
 - **Kapitel:** `playlist[n]='…mp4'` aus dem Skript der Videoseite, Titel aus `#playlist_n`.
   Kapitel 0 ist das Intro; schlägt ein Kapitel fehl, springt der Player weiter.
-- **Wiedergabe:** Vor jedem Kapitel und nach Hängern pausiert der Player, bis genug Vorlauf
-  geladen ist (`START_BUFFER`/`STALL_BUFFER` in `js/view-player.js`). Ein zweites `<video>`
-  (`#video2`) lädt ab ca. 60 s vor Kapitelende das nächste Kapitel vor; beim Wechsel werden die
-  Elemente getauscht (`swapToStandby`). Ereignisse werden nur vom jeweils aktiven Element verarbeitet.
 
 Eingelesenes HTML wird mit `Util.parseHtml` in ein inertes Dokument geparst. Skripte werden
 entfernt und Attribute/Tags, die etwas nachladen könnten (`src`, `style`, `<link>`, …), umbenannt.
