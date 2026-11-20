@@ -62,9 +62,15 @@ var App = (function () {
     }
 
     function logout() {
-        CredStore.clear();
-        Api.logout();
-        showLogin('Du wurdest abgemeldet.');
+        CredStore.clear(); // lokal sofort loeschen, unabhaengig vom Server
+        Util.loading(true, 'Abmelden…');
+        Api.logout(function (err) {
+            Util.loading(false);
+            showLogin(err
+                ? 'Zugangsdaten gelöscht. Die Sitzung beim Server konnte aber nicht beendet werden ' +
+                  '(keine Verbindung?) – sie wird beim nächsten Anmelden beendet oder läuft von selbst ab.'
+                : 'Du wurdest abgemeldet.');
+        });
     }
 
     // ------------------------------------------------------------ Spiele

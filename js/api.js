@@ -269,9 +269,23 @@ var Api = (function () {
         });
     }
 
-    function logout() {
+    /**
+     * Beim Server abmelden und pruefen, ob die Sitzung wirklich beendet ist. cb(err)
+     * err.code 'logout_failed': Server-Sitzung besteht noch (oder keine Verbindung).
+     */
+    function logout(cb) {
         credentials = null;
-        if (!MOCK) { Http.get(URL_LOGOUT, function () {}); }
+        cb = cb || function () {};
+        if (MOCK) { return cb(null); }
+        var failed = { code: 'logout_failed',
+            message: 'Die Sitzung bei spiele-offensive.de konnte nicht beendet werden.' };
+        Http.get(URL_LOGOUT, function (err) {
+            if (err) { return cb(failed); }
+            Http.get(URL_LOGIN, function (err2, res) {
+                if (err2 || isLoggedIn(res.text)) { return cb(failed); }
+                cb(null);
+            });
+        });
     }
 
     return {

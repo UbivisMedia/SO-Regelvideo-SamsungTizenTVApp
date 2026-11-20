@@ -27,8 +27,11 @@ var Util = (function () {
         // Skripte/Styles vorab entfernen: spart Speicher und Zeit auf alten TVs.
         html = html.replace(/<script\b[\s\S]*?<\/script>/gi, '')
                    .replace(/<style\b[\s\S]*?<\/style>/gi, '')
-                   // Lade-Attribute umbenennen (src="x" -> data-x-src="x")
-                   .replace(/(\s)(src|srcset|poster|background|data|style|xlink:href)(\s*=)/gi, '$1data-x-$2$3')
+                   // Lade-Attribute umbenennen (src="x" -> data-x-src="x"). Als Trenner vor dem
+                   // Attribut gelten wie im HTML-Parser auch "/" und Anfuehrungszeichen
+                   // (<img/src=x>, <img alt="a"src=x>).
+                   .replace(/([\s\/"'])(src|srcset|lowsrc|dynsrc|poster|background|data|style|xlink:href|archive|codebase|manifest)(\s*=)/gi,
+                            '$1data-x-$2$3')
                    // Tags, die ueber href/andere Attribute laden, unschaedlich umbenennen
                    .replace(/<(\/?)(link|iframe|frame|object|embed|image|use|meta|base)\b/gi, '<$1x-$2');
         var doc = document.implementation.createHTMLDocument('');

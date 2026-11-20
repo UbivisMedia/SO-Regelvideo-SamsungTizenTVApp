@@ -4,6 +4,14 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionierung nach
 [Semantic Versioning](https://semver.org/lang/de/). Die Versionsnummer steht auch in `config.xml`.
 
+## [Unveröffentlicht]
+
+### Sicherheit
+- Abmelden prüft jetzt, ob die Sitzung beim Server wirklich beendet ist, und meldet es, wenn nicht
+  (z. B. ohne Verbindung). Die gespeicherten Zugangsdaten werden in jedem Fall sofort gelöscht.
+- Die Entschärfung eingelesener Seiten erkennt auch Schreibweisen ohne Leerzeichen
+  (`<img/src=…>`, `alt="a"src=…`) und weitere Lade-Attribute (`lowsrc`, `manifest` u. a.).
+
 ## [1.3.0] – 2026-11-20
 
 ### Neu
