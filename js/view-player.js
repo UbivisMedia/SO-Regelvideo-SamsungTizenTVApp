@@ -129,6 +129,64 @@ var PlayerView = (function () {
         setStatus('Puffern… ' + Math.floor(ahead) + ' / ' + Math.ceil(need || buffering.target) + ' s');
     }
 
+    // ------------------------------------------------- Naechstes Kapitel vorladen
+    // Ein zweites, unsichtbares <video> laedt gegen Ende eines Kapitels schon das naechste.
+    // Beim Kapitelwechsel werden die beiden Elemente nur getauscht -> kein Warten.
+    // Manche aeltere TVs koennen nur ein Video gleichzeitig verarbeiten: Gibt es dann einen
+    // Fehler im laufenden Kapitel, wird das Vorladen fuer diese Sitzung abgeschaltet.
+    var PRELOAD_NEXT = true;
+    var PRELOAD_LEAD = 60;        // Sekunden vor Kapitelende mit dem Vorladen beginnen
+    var standby = null;           // das jeweils unsichtbare <video>
+    var preloadIdx = -1;          // Kapitel, das in "standby" vorgeladen wird
+    var preloadOff = false;       // nach Problemen fuer diese Sitzung aus
+    var preloadFailed = -1;       // Kapitel, dessen Vorladen fehlschlug (nicht erneut versuchen)
+
+    function checkPreload() {
+        if (!PRELOAD_NEXT || preloadOff || buffering) { return; }
+        var next = current + 1;
+        if (next >= chapters.length || preloadIdx === next || preloadFailed === next) { return; }
+        var d = video.duration;
+        if (!isFinite(d) || d <= 0) { return; }
+        var remaining = d - video.currentTime;
+        if (remaining > PRELOAD_LEAD) { return; }
+        // Der Bandbreite des laufenden Kapitels nichts wegnehmen: erst starten, wenn es bis zum
+        // Ende geladen ist - oder spaetestens in der zweiten Haelfte der Vorlaufzeit.
+        if (bufferedAhead() < remaining - 1 && remaining > PRELOAD_LEAD / 2) { return; }
+        dropPreload();
+        preloadIdx = next;
+        standby.src = chapters[next].url;
+        standby.load();
+    }
+
+    function dropPreload() {
+        preloadIdx = -1;
+        if (standby && standby.getAttribute('src')) {
+            standby.pause();
+            standby.removeAttribute('src');
+            standby.load();
+        }
+    }
+
+    /** Vorgeladenes Element sichtbar machen und zum aktiven Player machen. */
+    function swapToStandby() {
+        var old = video;
+        video = standby;
+        standby = old;
+        preloadIdx = -1;
+        Util.toggleClass(video, 'standby', false);
+        Util.toggleClass(standby, 'standby', true);
+        standby.pause();
+        standby.removeAttribute('src');
+        standby.load();
+    }
+
+    function preloadInfo() {
+        if (!PRELOAD_NEXT || preloadOff) { return 'aus'; }
+        if (preloadIdx < 0) { return '-'; }
+        var b = standby.buffered, end = b.length ? b.end(b.length - 1) : 0;
+        return 'Kapitel ' + (preloadIdx + 1) + ': ' + end.toFixed(1) + ' s geladen, ready=' + standby.readyState;
+    }
+
     // ----------------------------------------------------------- Diagnose
     // Blaue Taste (Desktop: D) blendet Wiedergabe-Statistiken ein/aus.
     var stats = { waiting: 0, stalled: 0 }, debugTimer = null, lastFrames = null;
@@ -164,6 +222,7 @@ var PlayerView = (function () {
             'Frames/s  ' + fps + '   verloren/s ' + drop + (f ? '   gesamt ' + f.dropped + '/' + f.total : ''),
             'waiting   ' + stats.waiting + '   stalled ' + stats.stalled +
                 (buffering ? '   VORPUFFERN ziel ' + buffering.target + ' s' : ''),
+            'Vorladen  ' + preloadInfo(),
             'Video     ' + video.videoWidth + 'x' + video.videoHeight,
             'Fenster   ' + window.innerWidth + 'x' + window.innerHeight + ' @' + (window.devicePixelRatio || 1),
             'Kapitel   ' + (listVisible() ? 'offen' : 'zu') + '   OSD ' + (/\bhidden\b/.test(osd.className) ? 'aus' : 'an')
@@ -180,9 +239,18 @@ var PlayerView = (function () {
         }
     }
 
+    /** Listener an beide <video> haengen, aber nur Ereignisse des aktiven Players verarbeiten. */
+    function listen(type, fn) {
+        var els = [$('video'), $('video2')];
+        for (var i = 0; i < els.length; i++) {
+            els[i].addEventListener(type, function (e) { if (e.target === video) { fn(e); } });
+        }
+    }
+
     function init(exitHandler) {
         el = $('view-player');
         video = $('video');
+        standby = $('video2');
         osd = $('player-osd');
         chapterBox = $('player-chapters');
         chapterList = $('chapter-list');
@@ -191,9 +259,18 @@ var PlayerView = (function () {
         timeEl = $('osd-time');
         onExit = exitHandler;
 
+        // Fehler beim Vorladen (z. B. 403): still verwerfen, Kapitel wird dann normal geladen
+        var onStandbyError = function (e) {
+            if (e.target !== standby || preloadIdx < 0 || !e.target.getAttribute('src')) { return; }
+            preloadFailed = preloadIdx;
+            dropPreload();
+        };
+        video.addEventListener('error', onStandbyError);
+        standby.addEventListener('error', onStandbyError);
+
         // Listener nur einmal registrieren (die Originalseite haengt bei jedem Kapitelwechsel
         // einen weiteren "ended"-Listener an).
-        video.addEventListener('ended', function () {
+        listen('ended', function () {
             if (current + 1 < chapters.length) {
                 playChapter(current + 1);
             } else {
@@ -202,23 +279,35 @@ var PlayerView = (function () {
                 showList();
             }
         });
-        video.addEventListener('timeupdate', function () {
+        listen('timeupdate', function () {
             updateOsd();
+            checkPreload();
             if (Math.abs(video.currentTime - lastSavedTime) >= SAVE_INTERVAL) { saveProgress(); }
         });
-        video.addEventListener('pause', function () { saveProgress(); });
-        video.addEventListener('playing', function () { setStatus(null); });
-        video.addEventListener('waiting', function () {
+        listen('pause', function () { saveProgress(); });
+        listen('playing', function () { setStatus(null); });
+        listen('waiting', function () {
             stats.waiting++;
             // Haenger waehrend der Wiedergabe: ordentlich Vorlauf sammeln statt Stop-and-Go
             // (nach einem Sprung reicht der kleinere Vorlauf)
             if (!buffering && chapters.length) { startBuffering(video.seeking ? START_BUFFER : STALL_BUFFER); }
         });
-        video.addEventListener('stalled', function () { stats.stalled++; });
-        video.addEventListener('pause', function () { if (!video.ended) { showOsd(true); } });
-        video.addEventListener('error', function () {
+        listen('stalled', function () { stats.stalled++; });
+        listen('pause', function () { if (!video.ended) { showOsd(true); } });
+        listen('error', function () {
             if (!video.getAttribute('src')) { return; } // beim Schliessen
             stopBuffering();
+            // Fehler mitten im Kapitel, waehrend im Hintergrund vorgeladen wird: Vermutlich kann
+            // der TV nicht zwei Videos gleichzeitig. Vorladen abschalten, Kapitel an der Stelle
+            // neu laden (einmalig).
+            if (preloadIdx >= 0 && video.currentTime > 0 && !preloadOff) {
+                preloadOff = true;
+                dropPreload();
+                setStatus('Vorladen wird abgeschaltet – lade Kapitel neu…');
+                var idx = current, pos = video.currentTime;
+                setTimeout(function () { if (current === idx && chapters.length) { playChapter(idx, pos); } }, 1000);
+                return;
+            }
             // z.B. das Start-Intro liegt hinter Cloudflare -> automatisch weiter
             if (current + 1 < chapters.length) {
                 setStatus('Kapitel konnte nicht abgespielt werden – weiter…');
@@ -322,8 +411,13 @@ var PlayerView = (function () {
         listIdx = i;
         lastSavedTime = startAt || 0;
         setStatus('Lade…');
-        video.src = chapters[i].url;
-        video.load();
+        if (preloadIdx === i && !(startAt > 0)) {
+            swapToStandby(); // schon im Hintergrund geladen -> Puffer ist (fast) voll
+        } else {
+            dropPreload();
+            video.src = chapters[i].url;
+            video.load();
+        }
         if (startAt > 0) {
             // Springen ist erst moeglich, wenn die Metadaten (Dauer) bekannt sind.
             seekPending = true;
@@ -365,6 +459,8 @@ var PlayerView = (function () {
         resumeEntry = null;
         chapters = []; // verhindert verzoegerte Kapitelwechsel nach dem Schliessen
         stopBuffering();
+        dropPreload();
+        preloadFailed = -1;
         video.pause();
         video.removeAttribute('src');
         video.load();
