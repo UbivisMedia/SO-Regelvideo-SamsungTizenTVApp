@@ -7,10 +7,13 @@ Alle nennenswerten Änderungen an diesem Projekt. Format angelehnt an
 ## [Unveröffentlicht]
 
 ### Neu
-- **Vorpuffern im Player:** Jedes Kapitel startet erst, wenn ca. 10 s Video geladen sind; nach
+- **Vorpuffern im Player:** Jedes Kapitel startet erst, wenn ca. 5 s Video geladen sind; nach
   einem Hänger sammelt der Player ca. 20 s Vorlauf, statt im Sekundentakt zu stocken. Während des
   Wartens zeigt er „Puffern… x / y s“. Lädt der TV im Pausezustand nicht weiter, startet die
   Wiedergabe nach wenigen Sekunden trotzdem.
+- **Hänger-Wächter:** Bleibt das Bild ohne Meldung des TVs stehen (Zeit läuft 6 s nicht weiter),
+  lädt der Player das Kapitel an derselben Stelle neu; hängt es wiederholt, geht es mit dem
+  nächsten Kapitel weiter. Anzahl in der Diagnose-Anzeige (blaue Taste).
 
 ### Geändert
 - Dokumentation aufgeteilt: `README.md` nur noch für Installation (jetzt direkt aus dem

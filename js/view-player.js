@@ -74,7 +74,7 @@ var PlayerView = (function () {
     // <video> laesst sich die Puffergroesse nicht vorschreiben. Stattdessen pausieren wir
     // selbst, bis genug Vorlauf geladen ist: beim Kapitelstart und nach jedem Haenger.
     // So gibt es eine kurze Wartezeit statt staendigem Stocken.
-    var START_BUFFER = 10;        // Sekunden Vorlauf vor dem Start eines Kapitels
+    var START_BUFFER = 5;         // Sekunden Vorlauf vor dem Start eines Kapitels / nach Spruengen
     var STALL_BUFFER = 20;        // Sekunden Vorlauf nach einem Haenger
     var BUFFER_CHECK = 250;       // ms
     var NO_PROGRESS_WAIT = 4000;  // ms ohne Fortschritt beim Laden -> trotzdem starten
@@ -129,9 +129,62 @@ var PlayerView = (function () {
         setStatus('Puffern… ' + Math.floor(ahead) + ' / ' + Math.ceil(need || buffering.target) + ' s');
     }
 
+    // ----------------------------------------------------------- Waechter
+    // Bleibt das Bild stehen, ohne dass der TV "waiting" meldet (Zeit laeuft nicht weiter,
+    // Video ist aber nicht pausiert), wird das Kapitel an derselben Stelle neu geladen.
+    // Haengt es danach wieder, geht es beim naechsten Mal mit dem naechsten Kapitel weiter.
+    var FREEZE_TIMEOUT = 6000;    // ms ohne Fortschritt -> Haenger
+    var MAX_FREEZE_RELOADS = 2;   // Neuladeversuche je Kapitel, danach naechstes Kapitel
+    var FREEZE_RESET = 30000;     // ms fluessige Wiedergabe setzen den Zaehler zurueck
+    var watchdog = null, wdLastT = -1, wdSince = 0, wdOkSince = 0, freezeCount = 0;
+
+    function startWatchdog() {
+        stopWatchdog();
+        wdLastT = -1; wdSince = new Date().getTime(); wdOkSince = 0; freezeCount = 0;
+        watchdog = setInterval(watchdogTick, 1000);
+    }
+
+    function stopWatchdog() {
+        if (watchdog) { clearInterval(watchdog); watchdog = null; }
+    }
+
+    function watchdogTick() {
+        if (!chapters.length) { return; }
+        var now = new Date().getTime(), t = video.currentTime;
+        var idle = video.paused || video.ended || video.seeking || buffering || seekPending ||
+                   !video.getAttribute('src') || resumeVisible();
+        if (idle || Math.abs(t - wdLastT) > 0.05) {
+            if (!idle) {
+                if (!wdOkSince) { wdOkSince = now; }
+                if (now - wdOkSince > FREEZE_RESET) { freezeCount = 0; }
+            }
+            wdLastT = t; wdSince = now;
+            return;
+        }
+        if (now - wdSince < FREEZE_TIMEOUT) { return; }
+
+        // Haenger erkannt
+        stats.freezes++;
+        wdSince = now; wdOkSince = 0;
+        var d = video.duration, atEnd = isFinite(d) && d > 0 && t > d - 1.5;
+        if (atEnd || freezeCount >= MAX_FREEZE_RELOADS) {
+            if (current + 1 < chapters.length) {
+                setStatus('Wiedergabe hängt – weiter zum nächsten Kapitel…');
+                playChapter(current + 1);
+            } else {
+                video.pause();
+                setStatus('Wiedergabe hängt. OK drücken für einen neuen Versuch.');
+            }
+            return;
+        }
+        freezeCount++;
+        setStatus('Wiedergabe hängt – lade Kapitel neu…');
+        playChapter(current, t > 0.5 ? t : 0);
+    }
+
     // ----------------------------------------------------------- Diagnose
     // Blaue Taste (Desktop: D) blendet Wiedergabe-Statistiken ein/aus.
-    var stats = { waiting: 0, stalled: 0 }, debugTimer = null, lastFrames = null;
+    var stats = { waiting: 0, stalled: 0, freezes: 0 }, debugTimer = null, lastFrames = null;
 
     function frameCounts() {
         if (video.getVideoPlaybackQuality) {
@@ -164,6 +217,7 @@ var PlayerView = (function () {
             'Frames/s  ' + fps + '   verloren/s ' + drop + (f ? '   gesamt ' + f.dropped + '/' + f.total : ''),
             'waiting   ' + stats.waiting + '   stalled ' + stats.stalled +
                 (buffering ? '   VORPUFFERN ziel ' + buffering.target + ' s' : ''),
+            'Haenger   ' + stats.freezes + ' erkannt, Kapitel neu geladen',
             'Video     ' + video.videoWidth + 'x' + video.videoHeight,
             'Fenster   ' + window.innerWidth + 'x' + window.innerHeight + ' @' + (window.devicePixelRatio || 1),
             'Kapitel   ' + (listVisible() ? 'offen' : 'zu') + '   OSD ' + (/\bhidden\b/.test(osd.className) ? 'aus' : 'an')
@@ -318,6 +372,7 @@ var PlayerView = (function () {
     /** startAt (optional): Startposition in Sekunden, z.B. beim Fortsetzen. */
     function playChapter(i, startAt) {
         if (i < 0 || i >= chapters.length) { return; }
+        if (i !== current) { freezeCount = 0; } // Neuladeversuche gelten je Kapitel
         current = i;
         listIdx = i;
         lastSavedTime = startAt || 0;
@@ -351,6 +406,8 @@ var PlayerView = (function () {
         buildList();
         Util.show(el);
         hideList();
+        current = 0;
+        startWatchdog();
         var saved = Progress.get(game.id);
         if (canResume(saved)) {
             showResumeDialog(saved);
@@ -365,6 +422,7 @@ var PlayerView = (function () {
         resumeEntry = null;
         chapters = []; // verhindert verzoegerte Kapitelwechsel nach dem Schliessen
         stopBuffering();
+        stopWatchdog();
         video.pause();
         video.removeAttribute('src');
         video.load();
